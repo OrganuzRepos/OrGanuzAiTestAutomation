@@ -29,3 +29,14 @@ cp env/.prod.env.example env/.prod.env   # prod creds (optional locally)
 The real `env/.dev.env` / `env/.prod.env` are **gitignored** (Restricted — never
 commit). Only the `*.example` templates are committed. On CI the prod pipeline
 materializes `env/.prod.env` from the `DOTENV_PROD` repo secret.
+
+## Slack alerting
+
+Three optional webhooks — `SLACK_WEBHOOK_URL`, `SLACK_WEBHOOK_BOT_URL`, and
+`SLACK_ORGANUZ_TESTING_URL` (the **#organuz-testing** channel). After a run,
+`scripts/run-all-tests.sh` posts the run status plus the Allure / Grafana /
+Playwright HTML / Scalar report links to **every** webhook that is set (any/all;
+an unset one is skipped, a failed post is non-fatal). The CI report-summary step
+in `parallel-tests.yml` mirrors this, reading each webhook from a GitHub repo
+secret of the same name. `REMOTE_HREF` holds the GitHub repo home for
+report/remote links. Smoke-test the wiring with `./scripts/slack-alert-test.sh`.

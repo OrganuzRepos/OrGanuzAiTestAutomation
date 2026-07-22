@@ -156,7 +156,7 @@ This one script does everything end to end. In order, it:
 5. Brings up all local servers (FastAPI, Scalar, Prometheus, Pushgateway, Grafana, Allure).
 6. Pushes the run's QA metrics to the Pushgateway, so Grafana shows fresh numbers.
 7. Opens the Grafana dashboard.
-8. Posts the Allure + Grafana links to every configured Slack webhook (`SLACK_WEBHOOK_URL` / `SLACK_WEBHOOK_BOT_URL`). Each message is labeled by its source — *Local* vs *GitHub Actions*.
+8. Posts the run status + Allure / Grafana / Playwright HTML / Scalar report links to every configured Slack webhook (`SLACK_WEBHOOK_URL` / `SLACK_WEBHOOK_BOT_URL` / `SLACK_ORGANUZ_TESTING_URL`, the #organuz-testing channel). Each message is labeled by its source — *Local* vs *GitHub Actions*.
 9. Prints the main service URLs at the end.
 
 The credential-gated role flows (`product-setup` → `product-authenticated`) stay out of this run. Run them directly instead:
