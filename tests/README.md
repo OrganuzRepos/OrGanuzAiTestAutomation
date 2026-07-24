@@ -82,8 +82,8 @@ Registration coverage lives in the plain `product` project so that it does not t
 shared role auth setup. Most registration tests are no-submit validation checks. Only the
 full property-owner signup test completes OTP and creates a fresh account.
 
-The active product project also contains explicit gates for side-effecting or diagnostic
-paths: `PRODUCT_OTP_UI=true` enables the real OTP-send UI check,
+The active product project also contains explicit gates for side-effecting
+paths: `PRODUCT_OTP_UI=true` enables the real OTP-send UI check, and
 `PRODUCT_WIZARD_E2E=true` enables authenticated characterization that creates a dev
 project.
 Geocode-driving wizard cases self-skip on CI; deterministic wizard and mobile checks still run.

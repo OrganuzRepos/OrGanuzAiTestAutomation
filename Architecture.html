@@ -1088,7 +1088,7 @@
       <span class="eyebrow">System architecture · 2026</span>
       <h1>The architecture behind <span class="hero-accent">OrGanuz AI</span> test automation</h1>
       <p class="subtitle">
-        A single-file architecture view for the OrGanuz AI site automation stack. Local runs start the runtime services, execute the active Playwright projects, generate Allure 3, and print the main service links. Seven projects are active by default — <code>product</code> (61 discovered calculator cases), <code>organuz-api</code> (Supabase/PostgREST), <code>agent</code> (orchestrator + <code>TestPlanAgent</code>), <code>security</code> (backend penetration checks), <code>fraud</code> (product fraud/ATO), <code>local-web</code> (local-only marketing e2e), and <code>accessibility</code> (WCAG/Axe) — <strong>188 discovered tests</strong>. Opt-in <code>monitoring</code> adds 50 Govmap/Ofek checks (<strong>238 total</strong>). The <code>chromium</code>, <code>product-setup</code>, and <code>product-authenticated</code> projects remain disabled in <code>playwright.config.ts</code>. GitHub Actions runs <code>product</code>, <code>organuz-api</code>, <code>agent</code>, <code>security</code>, <code>fraud</code>, and <code>accessibility</code> in parallel; <code>local-web</code> is local-only.
+        A single-file architecture view for the OrGanuz AI site automation stack. Local runs start the runtime services, execute the active Playwright projects, generate Allure 3, and print the main service links. Seven projects are active by default — <code>product</code> (60 discovered calculator cases), <code>organuz-api</code> (Supabase/PostgREST), <code>agent</code> (orchestrator + <code>TestPlanAgent</code>), <code>security</code> (backend penetration checks), <code>fraud</code> (product fraud/ATO), <code>local-web</code> (local-only marketing e2e), and <code>accessibility</code> (WCAG/Axe) — <strong>187 discovered tests</strong>. Opt-in <code>monitoring</code> adds 50 Govmap/Ofek checks (<strong>237 total</strong>). The <code>chromium</code>, <code>product-setup</code>, and <code>product-authenticated</code> projects remain disabled in <code>playwright.config.ts</code>. GitHub Actions runs <code>product</code>, <code>organuz-api</code>, <code>agent</code>, <code>security</code>, <code>fraud</code>, and <code>accessibility</code> in parallel; <code>local-web</code> is local-only.
       </p>
 
       <div class="services" id="services" aria-label="Local service links">
@@ -1123,11 +1123,11 @@
     <div class="cards">
       <div class="card" data-accent="blue">
         <div class="card-title"><span class="badge">TS</span> Playwright Tests</div>
-        <p class="card-desc">Active by default: <code>product</code> 61, <code>organuz-api</code> 1, <code>agent</code> 2, <code>security</code> 30, <code>fraud</code> 14, <code>local-web</code> 50, and <code>accessibility</code> 30 — <strong>188 discovered tests</strong>. <code>MONITORING_ENABLED=true</code> adds 50 live third-party checks (<strong>238 total</strong>). <code>chromium</code> (12) and <code>product-setup</code> → <code>product-authenticated</code> (3 + 10) remain disabled with their specs retained.</p>
+        <p class="card-desc">Active by default: <code>product</code> 60, <code>organuz-api</code> 1, <code>agent</code> 2, <code>security</code> 30, <code>fraud</code> 14, <code>local-web</code> 50, and <code>accessibility</code> 30 — <strong>187 discovered tests</strong>. <code>MONITORING_ENABLED=true</code> adds 50 live third-party checks (<strong>237 total</strong>). <code>chromium</code> (12) and <code>product-setup</code> → <code>product-authenticated</code> (3 + 10) remain disabled with their specs retained.</p>
       </div>
       <div class="card" data-accent="green">
         <div class="card-title"><span class="badge">E2E</span> Product Coverage</div>
-        <p class="card-desc"><code>tests/product</code> discovers 61 cases across API/public sanity, cellular login, English UI, offline matrix/role contracts, Pixel/Galaxy responsive layouts, and calculator wizard/customer-process journeys. Side-effecting OTP and authenticated-wizard paths are explicitly opt-in.</p>
+        <p class="card-desc"><code>tests/product</code> discovers 60 cases across API/public sanity, cellular login, English UI, offline matrix/role contracts, Pixel/Galaxy responsive layouts, and calculator wizard/customer-process journeys. Side-effecting OTP and authenticated-wizard paths are explicitly opt-in.</p>
       </div>
       <div class="card" data-accent="mint">
         <div class="card-title"><span class="badge">PY</span> FastAPI</div>
@@ -1423,7 +1423,7 @@
     </div>
 
     <h2 id="tests">Test Suites &mdash; Every Group in Detail</h2>
-    <p class="section-lead">Seven Playwright projects are active by default: <code>product</code> 61, <code>local-web</code> 50, <code>accessibility</code> 30, <code>security</code> 30, <code>fraud</code> 14, <code>agent</code> 2, and <code>organuz-api</code> 1. The default configuration discovers <strong>188 tests</strong>; the CI matrix excludes local-only <code>local-web</code> and runs the other six projects. Opt-in <code>monitoring</code> adds 50 checks (<strong>238 total</strong>). <code>chromium</code>, <code>product-setup</code>, and <code>product-authenticated</code> remain disabled with their specs retained.</p>
+    <p class="section-lead">Seven Playwright projects are active by default: <code>product</code> 60, <code>local-web</code> 50, <code>accessibility</code> 30, <code>security</code> 30, <code>fraud</code> 14, <code>agent</code> 2, and <code>organuz-api</code> 1. The default configuration discovers <strong>187 tests</strong>; the CI matrix excludes local-only <code>local-web</code> and runs the other six projects. Opt-in <code>monitoring</code> adds 50 checks (<strong>237 total</strong>). <code>chromium</code>, <code>product-setup</code>, and <code>product-authenticated</code> remain disabled with their specs retained.</p>
 
     <div class="panel">
       <h3><span class="badge">UI · 12</span> chromium &nbsp;<code>tests/ui/**</code> · <code>@other-smoke</code> · prod <code>www.organuz.ai</code> &nbsp;<em>· currently disabled in playwright.config.ts (commented out; specs kept) — 12 when re-enabled</em></h3>
@@ -1439,11 +1439,11 @@
     </div>
 
     <div class="panel">
-      <h3><span class="badge">E2E · 61</span> product &nbsp;<code>tests/product/**</code> (ignores <code>flows/**</code>) · no grep · dev (<code>QA_TARGET_ENV</code>) &nbsp;<em>· active by default</em></h3>
+      <h3><span class="badge">E2E · 60</span> product &nbsp;<code>tests/product/**</code> (ignores <code>flows/**</code>) · no grep · dev (<code>QA_TARGET_ENV</code>) &nbsp;<em>· active by default</em></h3>
       <ul>
         <li><strong><code>api/token-sanity.spec.ts</code> (3, live)</strong> — opens the dev calculator, captures the UI token off the wire, and hits the dev RPC gateway. Checks: (1) the token is well-formed (<code>24-hex-id</code>-<code>32-hex-secret</code>); (2) it matches the bundled public token in <code>config.devApi.token</code> (bundle/config-drift guard); (3) every captured backend call is HTTPS, sends the token in the body (never the URL), and targets only the gateway host. <em>Skips</em> when the dev gateway is down (no token extractable).</li>
         <li><strong><code>auth/cellular-login.spec.ts</code> (9)</strong> — signed-out cellular-login dialog, phone validation, registration entry points, close behavior, and an opt-in real OTP step.</li>
-        <li><strong><code>mobile/**</code> (7)</strong> — Pixel 5 / Galaxy S9+ responsive shell, overflow, dialog fit, and one opt-in navigation diagnostic.</li>
+        <li><strong><code>mobile/**</code> (6)</strong> — Pixel 5 / Galaxy S9+ responsive shell, overflow, and dialog fit.</li>
         <li><strong><code>wizard/**</code> (8)</strong> — calculator step tracker, geocode-driving wizard journeys, customer process, and opt-in authenticated characterization.</li>
         <li><strong><code>api/public-app-sanity.spec.ts</code> (5, live)</strong> — public (no-login) checks after unlocking the password gate: the calculator shell renders; a fresh visitor is signed out; the header sign-in/register entry point is visible; the app is served over HTTPS on the configured dev host; and the app fires at least one token-bearing backend call on load. <em>Skips</em> on a genuine dev outage (AppUnavailable), fails only on a real product regression.</li>
         <li><strong><code>en/public-app-en-sanity.spec.ts</code> (6, live)</strong> — the English-language variant of the public no-login checks: switches the dev calculator to EN and re-asserts the shell renders, the signed-out state, the sign-in/register entry point, HTTPS on the configured host, and a token-bearing backend call on load. <em>Skips</em> on a genuine dev outage.</li>
@@ -1512,7 +1512,7 @@
 
     <div class="panel">
       <h3><span class="badge">MON · 50</span> monitoring &nbsp;<code>tests/monitoring/**</code> · opt-in (<code>MONITORING_ENABLED=true</code>) · live third-party</h3>
-      <p>Dedicated availability + contract monitoring for the two critical third-party map dependencies the product relies on, using <code>APIRequestContext</code> only. This project is registered <strong>only</strong> when <code>MONITORING_ENABLED=true</code>, so it never runs in the default 188-test suite (238 with it); it is driven separately by the <strong>External API Monitoring</strong> workflow and is meant to fail when a dependency is down. HTML geo/bot challenge pages produce an explicit environmental skip; real 5xx, connection, or payload failures remain alerts.</p>
+      <p>Dedicated availability + contract monitoring for the two critical third-party map dependencies the product relies on, using <code>APIRequestContext</code> only. This project is registered <strong>only</strong> when <code>MONITORING_ENABLED=true</code>, so it never runs in the default 187-test suite (237 with it); it is driven separately by the <strong>External API Monitoring</strong> workflow and is meant to fail when a dependency is down. HTML geo/bot challenge pages produce an explicit environmental skip; real 5xx, connection, or payload failures remain alerts.</p>
       <ul>
         <li><strong><code>govmap.spec.ts</code> (25, live)</strong> — <strong>Govmap</strong> (<code>www.govmap.gov.il</code>): the map API and address geocoding.</li>
         <li><strong><code>ofek.spec.ts</code> (25, live)</strong> — <strong>Ofek</strong> (<code>basemaps.govmap.gov.il</code>): the Survey-of-Israel national orthophoto tiles the roof scan runs on.</li>
@@ -1571,10 +1571,10 @@
     <div class="panel">
       <h2 id="tags">Tags &amp; Gating</h2>
       <ul>
-        <li><code>@other-smoke</code> — the default filter for <code>organuz-api</code> (1) and <code>agent</code> (2), plus <code>chromium</code> when re-enabled. <code>product</code> (61), <code>security</code> (30), <code>fraud</code> (14), <code>local-web</code> (50), and <code>accessibility</code> (30) run everything matched.</li>
+        <li><code>@other-smoke</code> — the default filter for <code>organuz-api</code> (1) and <code>agent</code> (2), plus <code>chromium</code> when re-enabled. <code>product</code> (60), <code>security</code> (30), <code>fraud</code> (14), <code>local-web</code> (50), and <code>accessibility</code> (30) run everything matched.</li>
         <li><code>@ui</code> — marketing-site specs; <code>@organuz-api @contract</code> — the backend contract test.</li>
         <li><code>@product @api @sanity</code> — the dev token-sanity spec (<code>@critical</code>/<code>@security</code> on individual checks); <code>@product @roles @e2e</code> — the live per-role specs. The <code>product</code> project has no grep filter, so every matched spec runs.</li>
-        <li>Sanctioned skips cover genuine product outages, CI-blocked geocoding, explicit OTP/wizard/mobile diagnostic gates, local-only marketing specs, unreachable fraud auth backends, and disabled role sessions. The active configuration discovers <strong>188 tests</strong>; monitoring raises that to 238.</li>
+        <li>Sanctioned skips cover genuine product outages, CI-blocked geocoding, explicit OTP/wizard gates, local-only marketing specs, unreachable fraud auth backends, and disabled role sessions. The active configuration discovers <strong>187 tests</strong>; monitoring raises that to 237.</li>
         <li>Specs run <strong>fully parallel</strong> (<code>fullyParallel: true</code>); data-contract and stubbed-agent tests share no state, and role specs reuse read-only saved sessions.</li>
       </ul>
     </div>

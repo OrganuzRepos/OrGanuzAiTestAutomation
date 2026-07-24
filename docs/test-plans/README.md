@@ -29,15 +29,15 @@ removed, keep these plans in sync with the specs and with the counts in
 | 9 | [Local Web (local-only marketing e2e)](09-local-web.md) | `local-web` | `tests/local-web/**` | 50 | Marketing site (prod `www.organuz.ai`) — self-skips on CI |
 | 10 | [Accessibility](10-accessibility.md) | `accessibility` | `tests/accessibility/**` | 30 | Marketing site (prod `www.organuz.ai`) — local + CI |
 | 11 | [Product Fraud / ATO](11-fraud.md) | `fraud` | `tests/fraud/**` | 14 | Product app origin + auth backend (dev by default) |
-| 12 | [Product Interactive UI](12-product-interactions.md) | `product` | `tests/product/auth/**`, `mobile/**`, `wizard/**` | 24 | Dev calculator — cellular login, mobile, and wizard |
+| 12 | [Product Interactive UI](12-product-interactions.md) | `product` | `tests/product/auth/**`, `mobile/**`, `wizard/**` | 23 | Dev calculator — cellular login, mobile, and wizard |
 
 Plans **1 and 4 are currently DISABLED** — their projects are commented out in
 `playwright.config.ts` (spec files retained; re-enable by uncommenting). Their
 case counts above describe the specs as written, not the current default run.
 
-**Default run** (`npx playwright test`): **188 discovered tests** across seven
-projects — `product` 61 (public sanity 8 + matrix/role contracts 23 + English 6
-+ interactive UI 24), `local-web` 50, `accessibility` 30, `security` 30,
+**Default run** (`npx playwright test`): **187 discovered tests** across seven
+projects — `product` 60 (public sanity 8 + matrix/role contracts 23 + English 6
+and interactive UI 23), `local-web` 50, `accessibility` 30, `security` 30,
 `fraud` 14, `agent` 2, and `organuz-api` 1. Plans **1 and 4
 are disabled** (their projects are commented out in `playwright.config.ts`), so
 the marketing UI sanity and the product roles e2e do not run in the default
@@ -55,7 +55,7 @@ and Ofek (govmap 25 + ofek 25). It is **never** part of the default suite, so an
 outage at Govmap or Ofek can't break the PR gate. Instead it runs on the
 scheduled **External API Monitoring** workflow and alerts through an
 auto-managed GitHub issue plus Slack. With monitoring enabled, the total is
-**238** (default 188 + monitoring 50).
+**237** (default 187 + monitoring 50).
 
 ## Sanctioned skips (never failures)
 
@@ -78,8 +78,7 @@ auto-managed GitHub issue plus Slack. With monitoring enabled, the total is
   local/CI divergence.
 - **Group 12 (product interactive UI):** live geocode-driving wizard cases
   self-skip on CI; the real OTP-send case requires `PRODUCT_OTP_UI=true`;
-  authenticated characterization requires `PRODUCT_WIZARD_E2E=true`; and the
-  temporary mobile navigation diagnostic requires `MOBILE_NAV_EXPLORE=true`.
+  authenticated characterization requires `PRODUCT_WIZARD_E2E=true`.
 
 Everything else must pass. See `CLAUDE.md` → "Conventions" for the full policy.
 
