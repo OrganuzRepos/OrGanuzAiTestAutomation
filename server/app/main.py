@@ -1,7 +1,18 @@
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel, Field
+
+
+# Origins allowed to call the API from a browser (the Scalar/Swagger UI). Locally
+# this is the swagger container on :8080; on a hosted deploy (e.g. Railway) set
+# CORS_ALLOW_ORIGINS to the public swagger URL(s), comma-separated.
+def _cors_origins() -> list[str]:
+    raw = os.getenv("CORS_ALLOW_ORIGINS", "")
+    origins = [o.strip() for o in raw.split(",") if o.strip()]
+    return origins or ["http://localhost:8080", "http://127.0.0.1:8080"]
 
 
 class ServiceStatus(BaseModel):
@@ -105,7 +116,7 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8080", "http://127.0.0.1:8080"],
+    allow_origins=_cors_origins(),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

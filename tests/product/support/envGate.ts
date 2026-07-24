@@ -12,6 +12,22 @@ import type { ProductPersonaId } from '../matrix/e2e-matrix.data';
  */
 
 /**
+ * Skip a wizard spec that drives the live address autocomplete when running on CI. The
+ * autocomplete depends on an external geocode (govmap.gov.il) that is geo-blocked / flaky
+ * for CI runners outside Israel — the same block the `monitoring` canary guards against —
+ * so a hosted run would hard-fail on the suggestion wait rather than reflect a product bug.
+ * These specs are therefore LOCAL-ONLY (they run against the dev app from a developer
+ * machine), the same sanctioned CI divergence as `local-web`. Call at the top of any test
+ * that types an address and waits for the suggestion list. See the test-suite-parity skill.
+ */
+export function skipGeocodeDrivingOnCi(): void {
+  test.skip(
+    !!process.env.CI,
+    'live address geocode is geo-blocked/flaky on CI runners — local-only, like local-web',
+  );
+}
+
+/**
  * Run a product action, turning a genuine dev outage into a skip (never a failure). Only
  * the typed environmental errors are swallowed; any other error is a real product bug and
  * is rethrown so the test fails. Use for openCalculator()/login() entry points.

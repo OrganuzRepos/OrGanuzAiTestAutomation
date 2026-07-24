@@ -70,6 +70,9 @@ services:
       - "5050:80"
     volumes:
       - ./allure-report:/usr/share/nginx/html:ro
+      # no-store on index.html so a regenerated report (new content-hashed
+      # bundles) isn't masked by a stale cached entry point -> blank page.
+      - ./server/allure-nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
   tests:
     build:

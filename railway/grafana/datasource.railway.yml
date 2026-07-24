@@ -1,0 +1,12 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: Prometheus
+    type: prometheus
+    access: proxy
+    # Railway private networking. Assumes the prometheus service is named
+    # "prometheus" and listens on 9090.
+    url: http://prometheus.railway.internal:9090
+    isDefault: true
+    editable: true

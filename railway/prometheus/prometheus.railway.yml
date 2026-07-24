@@ -1,0 +1,25 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # FastAPI process metrics — reached over Railway private networking.
+  # Assumes the api service is named "api" (-> api.railway.internal) and listens
+  # on a fixed 8000 (set PORT=8000 on that service).
+  - job_name: fastapi
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["api.railway.internal:8000"]
+        labels:
+          service: organuz-ai-fastapi-server
+
+  # QA test metrics (qa_playwright_*) pushed by scripts/push-qa-metrics.mjs.
+  # Assumes the pushgateway service is named "pushgateway".
+  - job_name: pushgateway
+    honor_labels: true
+    static_configs:
+      - targets: ["pushgateway.railway.internal:9091"]
