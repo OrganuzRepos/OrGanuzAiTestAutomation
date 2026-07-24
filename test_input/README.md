@@ -5,7 +5,8 @@ test plans (one per URL) instead of taking a single URL on the command line:
 
 ```bash
 npm run agent:plan -- --input            # reads ./test_input
-npm run agent:plan -- --input --live     # same, but explores the real pages via Playwright MCP
+1
+     # same, but explores the real pages via Playwright MCP
 npm run agent:plan -- --input my_dir     # read a different folder
 ```
 
