@@ -6,7 +6,7 @@
 
 🎭 **Playwright**  ·  🟦 **TypeScript**  ·  🟢 **Node.js 22**  ·  🐳 **Docker**  ·  📈 **Grafana**  ·  🔥 **Prometheus**
 
-✅ **150 tests green**  ·  🛡️ **30 security checks**  ·  ♿ **WCAG / Axe accessibility**
+✅ **187 default tests discovered**  ·  🛡️ **44 security + fraud checks**  ·  ♿ **30 WCAG / Axe checks**
 
 | [🚀&nbsp;Setup](#local-setup) | [▶️&nbsp;Test&nbsp;Suite](#what-npm-test-runs) | [🛡️&nbsp;Security](#run-the-backend-security-pentest-tests) | [🤖&nbsp;QA&nbsp;Agent](#qa-agent) | [📊&nbsp;Dashboard](#grafana-qa-dashboard) | [⚙️&nbsp;CI](#github-actions) | [🔧&nbsp;Config](#configuration) |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -29,7 +29,7 @@ The tests are written with [Playwright](https://playwright.dev/) (a browser-auto
 
 Each part of the system and what it does:
 
-- **Playwright** — runs the actual tests. The active default suite is **150 tests**: product calculator checks (`product`), the Organuz backend API contract (`organuz-api`), backend penetration tests (`security`), local-only marketing e2e (`local-web`), QA-agent regressions (`agent`), and 30 CI-enabled marketing accessibility checks (`accessibility`). The broader marketing UI checks (`chromium`) and live per-role product flows remain disabled. External-API monitoring is opt-in.
+- **Playwright** — runs the actual tests. The active default suite discovers **187 tests**: product calculator checks (`product`), the Organuz backend API contract (`organuz-api`), backend penetration tests (`security`), product fraud/ATO checks (`fraud`), local-only marketing e2e (`local-web`), QA-agent regressions (`agent`), and CI-enabled marketing accessibility checks (`accessibility`). The broader marketing UI checks (`chromium`) and live per-role product flows remain disabled. External-API monitoring is opt-in.
 - **TypeScript** — the language the tests and framework code are written in.
 - **FastAPI** — a small local web service that exposes health checks and metadata endpoints.
 - **Scalar** — a nice API-reference page for the external OpenAPI docs.
@@ -77,24 +77,23 @@ Each part of the system and what it does:
     |-- agent/
     |   `-- orchestrator/      # QA agent orchestrator specs
     |-- organuz-api/
-    |   |-- contracts/         # Supabase/PostgREST projects schema + contract coverage
-    |   |-- resources/         # projects query behaviours (select, order, filter, count)
-    |   |-- security/          # anon auth, RLS, and negative cases
-    |   `-- functions/         # edge-function CORS preflight checks
+    |   `-- contracts/         # Supabase/PostgREST projects schema + contract coverage
     |-- product/
-    |   |-- matrix/            # product E2E matrix data + specs (credential-gated)
-    |   |-- flows/             # registration, full-flow, role specs (roles, areas, session, sanity, logout)
-    |   |-- api/               # gated product role backend API checks
-    |   |-- smoke/             # credential-free public calculator shell checks
-    |   `-- support/           # page helpers, ProductFlows, fixtures, product-setup auth (storageState)
+    |   |-- matrix/            # offline product E2E matrix + role contracts
+    |   |-- auth/              # signed-out cellular login dialog coverage
+    |   |-- mobile/            # responsive phone-viewport checks
+    |   |-- wizard/            # calculator wizard and customer-process e2e
+    |   |-- flows/             # disabled authenticated per-role browser specs
+    |   |-- api/               # public calculator and token sanity
+    |   |-- en/                # English public-app sanity
+    |   `-- support/           # layered pages, steps, flows, fixtures, auth setup
     |-- ui/                    # marketing-site specs (chromium project — currently disabled)
     |   |-- content/           # blog, FAQ, agents, projects, static pages
-    |   |-- diagnostics/       # expected-failure pipeline checks
-    |   |-- flows/             # cross-section critical user journeys
     |   |-- support/           # UI-only flow fixtures such as siteFlows
     |   `-- homepage/          # hero, navigation, contact
     |-- local-web/             # local-only marketing-site e2e (self-skips on CI)
     |-- accessibility/         # 30 CI-enabled WCAG/Axe marketing checks
+    |-- fraud/                 # 14 non-destructive product fraud / ATO checks
     |-- security/              # authorized, safe-by-default backend pentest specs
     |   `-- support/           # anon-key target helper
     |-- monitoring/            # live Govmap + Ofek availability checks (opt-in)
@@ -122,20 +121,21 @@ npm test
 
 ### ***What `npm test` runs***
 
-`npm test` runs the Playwright projects that are currently **active** in `playwright.config.ts`: `product`, `organuz-api`, `agent`, `security`, and `local-web`.
+`npm test` runs the Playwright projects that are currently **active** in `playwright.config.ts`: `product`, `organuz-api`, `agent`, `security`, `fraud`, `local-web`, and `accessibility`.
 
-The default suite is **150 tests**, all green:
+The default suite currently discovers **187 tests**:
 
-- `product` runs 37 tests — the credential-free public calculator smoke, registration validation, and the offline data-contract matrix/role specs (`tests/product/**` excluding the live `flows/**`).
+- `product` discovers 60 tests — public API sanity (8), cellular-login UI (9), English sanity (6), offline matrix/role contracts (23), mobile coverage (6), and wizard/customer-process coverage (8). Live role specs under `flows/**` remain excluded.
 - `organuz-api` runs one `@other-smoke` API contract.
 - `agent` runs two `@other-smoke` tests (the orchestrator regression and the URL-driven test-plan generator).
 - `security` runs 30 authorized, safe-by-default backend penetration checks (`SEC-01…SEC-30`, including the `SEC-21…SEC-30` account-takeover set); two mutating denial probes skip unless a disposable target is explicitly acknowledged.
+- `fraud` runs 14 authorized, non-destructive product-app fraud and account-takeover checks.
 - `local-web` runs 50 local-only marketing-site e2e — but every spec **self-skips when `CI` is set**, so they run only on a developer machine.
 - `accessibility` runs 30 WCAG/Axe and semantic regression checks against the public marketing homepage in local and CI runs.
 
 The marketing-site (`chromium`) and the live per-role product projects (`product-setup`, `product-authenticated`) remain **disabled** — commented out in `playwright.config.ts`. Their spec files under `tests/ui/**` and `tests/product/flows/**` are kept; re-enable a project by uncommenting its block. When enabled the counts are: `chromium` 12, `product-setup` 3, `product-authenticated` 10 (the 13 product-* live specs are credential-gated per-role tests that *skip* without persona secrets).
 
-The opt-in `monitoring` project is never part of this default green gate. Enabling it (`MONITORING_ENABLED=true`, see [External API monitoring](#external-api-monitoring-govmap--ofek)) adds 50 more tests, for **200 total**.
+The opt-in `monitoring` project is never part of this default gate. Enabling it (`MONITORING_ENABLED=true`, see [External API monitoring](#external-api-monitoring-govmap--ofek)) adds 50 more tests, for **237 discovered tests**.
 
 A couple more defaults worth knowing:
 
@@ -151,7 +151,7 @@ This one script does everything end to end. In order, it:
 
 1. Typechecks the project.
 2. Starts the local server stack when needed.
-3. Runs the active Playwright projects in a single invocation — currently `product`, `organuz-api`, `agent`, `security`, and `local-web` (the `chromium`, `product-setup`, and `product-authenticated` projects run too once they are re-enabled in `playwright.config.ts`). Results go into a freshly cleaned `allure-results/`, so the report aggregates all of them.
+3. Runs the active Playwright projects in a single invocation — currently `product`, `organuz-api`, `agent`, `security`, `fraud`, `local-web`, and `accessibility` (the `chromium`, `product-setup`, and `product-authenticated` projects run too once they are re-enabled in `playwright.config.ts`). Results go into a freshly cleaned `allure-results/`, so the report aggregates all of them.
 4. Generates an Allure 3 report.
 5. Brings up all local servers (FastAPI, Scalar, Prometheus, Pushgateway, Grafana, Allure).
 6. Pushes the run's QA metrics to the Pushgateway, so Grafana shows fresh numbers.
@@ -185,13 +185,13 @@ npx playwright test --project=local-web
 
 The `local-web` project (`tests/local-web/**`, 50 tests) drives a real chromium context against the prod marketing site `https://www.organuz.ai` — hero/nav, audiences, contact, FAQ, and agents/projects coverage. It is registered by default and runs locally, but **every spec self-skips when `process.env.CI` is set** (via `localOnly()` in `tests/local-web/support.ts`), and the CI matrix does not list the project — an intentional local/CI divergence (a sanctioned skip, per the `test-suite-parity` skill).
 
-### ***Run the product project (37 tests)***
+### ***Run the product project (60 discovered tests)***
 
 ```bash
 npm run test:product
 ```
 
-The `product` project is **active** and targets the calculator app for the selected `QA_TARGET_ENV` (default dev). Its default `product` run carries 37 tests: the credential-free smoke and registration specs plus the offline data-contract matrix/role specs. The live per-role browser flows live in the disabled `product-setup` / `product-authenticated` projects (re-enable both together to run them).
+The `product` project is **active** and targets the calculator app for the selected `QA_TARGET_ENV` (default dev). It currently discovers 60 tests across public API sanity, English UI sanity, cellular login, responsive mobile layouts, calculator wizard/customer-process journeys, and offline matrix/role contracts. The live per-role browser flows live in the disabled `product-setup` / `product-authenticated` projects (re-enable both together to run them).
 
 The product suite is split into two Playwright projects: the plain `product` project and the role-session `product-authenticated` project.
 
@@ -205,7 +205,7 @@ The matrix is **data-driven** — it's generated from `tests/product/matrix/e2e-
 - Negative coverage for fewer than 5 panels.
 - UI-only tracking for the no-panel case, where the request should *not* be sent.
 
-`npm run test:product` runs the whole `product` project (37 tests: smoke + registration + the offline matrix/role data-contract specs). The matrix contract asserts the generated combinations offline — the 48 main scenario/persona combinations, one insufficient-panels negative case, and one company-employee access-blocking case — without opening a browser.
+`npm run test:product` runs the whole 60-test `product` project. The matrix contract asserts the generated combinations offline — the 48 main scenario/persona combinations, one insufficient-panels negative case, and one company-employee access-blocking case — without opening a browser. Live wizard steps that drive Govmap geocoding self-skip on CI; the real OTP-send check requires `PRODUCT_OTP_UI=true`; authenticated characterization requires `PRODUCT_WIZARD_E2E=true`.
 
 ### ***External API monitoring (Govmap + Ofek)***
 
@@ -239,10 +239,13 @@ The `force_fail` `workflow_dispatch` input lets you exercise the alert path on d
 
 ### ***More about the `product` project***
 
-Beyond the matrix, the `product` project also carries credential-free smoke specs and registration coverage, so it has real runnable coverage even without persona credentials:
+Beyond the matrix, the `product` project carries runnable signed-out and responsive coverage without persona credentials:
 
-- **Smoke checks** exercise the public calculator shell served before login — the Organuz title, arena entry points, register/login entry, the four-step characterization stepper, the address step, and the disabled "continue" state.
-- **Registration specs** cover property-owner form validation, required terms consent, invalid-mobile gating, optional-consent behavior, full property-owner signup, and company/consultant lead-form redirects.
+- **Public/API sanity** verifies the calculator shell, signed-out state, HTTPS origin, and backend token handling.
+- **Cellular login** covers dialog entry, phone validation, registration choices, close behavior, and an opt-in OTP step.
+- **English sanity** verifies the public English-language calculator experience.
+- **Mobile coverage** runs the shell, overflow, and login dialog on Pixel 5 and Galaxy S9+ profiles.
+- **Wizard coverage** exercises step tracking, the address/geocode flow, customer progression, and an opt-in authenticated characterization path.
 
 ### ***Run the live persona browser flows***
 
@@ -272,7 +275,7 @@ The `security` project (`tests/security/**`, 30 checks) is **authorized, safe-by
 npx playwright test --project=organuz-api
 ```
 
-The `organuz-api` project targets the Organuz Supabase/PostgREST backend (`config.json → organuzApi`). It exercises the `/rest/v1/projects` REST resource — its contracts, query behaviours, and anon-key auth/RLS (row-level security) — plus the edge-function CORS preflights. It uses the public `anon` key that's already baked into the site bundle. These tests are read-only; they never POST to the edge functions.
+The `organuz-api` project targets the Organuz Supabase/PostgREST backend (`config.json → organuzApi`). Its active contract test validates the `/rest/v1/projects` response schema and bilingual fields using the public `anon` key already shipped by the site. The test is read-only.
 
 ### ***Run the agent regression tests***
 
@@ -334,9 +337,8 @@ npm run test-plans:pdf
 
 | Case | Command |
 | --- | --- |
-| `PW-ORGANUZ-API` | `npx playwright test --project=organuz-api` |
-| `PW-CHROMIUM` | `npx playwright test --project=chromium` |
-| `PW-PRODUCT` | `npx playwright test --project=product --grep "Product calculator and quotation E2E matrix"` |
+| `PW-API` | `npx playwright test --project=organuz-api` |
+| `PW-PRODUCT` | `npx playwright test --project=product` |
 | `PW-AGENT` | `npx playwright test --project=agent` |
 
 The command exits non-zero if any mapped project fails or is blocked.
@@ -494,12 +496,6 @@ Allure:   http://localhost:5050
 
 The script preserves the Playwright exit code. Even when tests fail, it still tries to generate and serve the Allure report before exiting.
 
-The UI suite includes `tests/ui/diagnostics/intentionally-failing.spec.ts`, an expected-failure test tagged `@intentionally-failing`. It validates the failure-capture pipeline without turning CI red. To skip it locally:
-
-```bash
-npx playwright test --grep-invert "@intentionally-failing"
-```
-
 Failure artifacts are collected by `src/fixtures/index.ts` and attached to Allure whenever Playwright records screenshots, videos, traces, or other attachments.
 
 ---
@@ -519,18 +515,22 @@ Runtime configuration is read from environment variables, with fallbacks in `con
 | `WORKERS` | Playwright worker count |
 | `BROWSER` | Browser project selection |
 | `INCLUDE_LOW_PRIORITY_TESTS` | Include broad marketing suites tagged `@low-priority` |
+| `PRODUCT_OTP_UI` | Enables the one cellular-login check that sends a real dev OTP (`true`); disabled by default |
+| `PRODUCT_WIZARD_E2E` | Enables authenticated wizard characterization that creates a real dev project (`true`); disabled by default |
+| `FRAUD_AUTH_BACKEND` / `FRAUD_APP_TOKEN` / `FRAUD_OTP_VERIFY_CALL` | Optional fraud-suite endpoint/token/OTP-method overrides |
 | `MONITORING_ENABLED` | Registers the opt-in `monitoring` project (`true` to run the live Govmap/Ofek checks) |
 | `QA_PLAYWRIGHT_RESULTS_PATH` | Path read by `scripts/push-qa-metrics.mjs` for the latest Playwright JSON report; defaults to `test-results/results.json` |
 | `PUSHGATEWAY_URL` | Prometheus Pushgateway the QA metrics are pushed to; defaults to `http://localhost:9091` |
 
-The Playwright projects (`product`, `organuz-api`, `agent`, `security`, and `local-web` are active by default; `chromium`, `product-setup`, and `product-authenticated` are commented out in `playwright.config.ts` with their specs retained; `monitoring` is opt-in):
+The Playwright projects `product`, `organuz-api`, `agent`, `security`, `fraud`, `local-web`, and `accessibility` are active by default; `chromium`, `product-setup`, and `product-authenticated` are commented out in `playwright.config.ts` with their specs retained; `monitoring` is opt-in:
 
 | Project | Status | Test files | Target | Typical command |
 | --- | --- | --- | --- | --- |
-| `product` | active | `tests/product/**/*.spec.ts` excluding `flows/**` (37) | Product calculator app, environment from `QA_TARGET_ENV` (default dev `https://dev1.app.organize.organuz.com`) | `npx playwright test --project=product` |
+| `product` | active | `tests/product/**/*.spec.ts` excluding `flows/**` (60 discovered) | Product calculator: public/API, cellular login, English, matrix, mobile, and wizard coverage | `npx playwright test --project=product` |
 | `organuz-api` | active | `tests/organuz-api/**/*.spec.ts` filtered to `@other-smoke` (1) | Organuz Supabase/PostgREST backend (`/rest/v1/projects`, edge functions) | `npx playwright test --project=organuz-api` |
 | `agent` | active | `tests/agent/**/*.spec.ts` filtered to `@other-smoke` (2) | QA-agent orchestrator + TestPlanAgent stubs (no network) | `npx playwright test --project=agent` |
 | `security` | active | `tests/security/**/*.spec.ts` (30) | Authorized, safe-by-default pentest of the Organuz Supabase backend (anon key), incl. account-takeover checks | `npx playwright test --project=security` |
+| `fraud` | active | `tests/fraud/**/*.spec.ts` (14) | Authorized, non-destructive fraud/ATO checks for the product app and auth backend | `npx playwright test --project=fraud` |
 | `local-web` | active, but every spec self-skips on CI | `tests/local-web/**/*.spec.ts` (50) | Local-only marketing-site e2e vs prod `https://www.organuz.ai` | `npx playwright test --project=local-web` |
 | `accessibility` | active | `tests/accessibility/**/*.spec.ts` (30) | WCAG/Axe + semantic regressions for the public marketing homepage | `npx playwright test --project=accessibility` |
 | `chromium` | disabled (commented out; specs kept) | `tests/ui/**/*.spec.ts` filtered to `@other-smoke` (12) | Marketing site `https://www.organuz.ai` (prod) | `npx playwright test --project=chromium` |
@@ -540,7 +540,7 @@ The Playwright projects (`product`, `organuz-api`, `agent`, `security`, and `loc
 
 Re-enable a disabled project by uncommenting its block in `playwright.config.ts`.
 
-The default suite is **150 tests** (`product` 37 + `organuz-api` 1 + `agent` 2 + `security` 30 + `local-web` 50 + `accessibility` 30), all green — **200** with `MONITORING_ENABLED=true`. The 50 `local-web` tests run only off CI, so the CI matrix runs 100 tests plus the non-blocking monitoring job.
+The default suite discovers **187 tests** (`product` 60 + `organuz-api` 1 + `agent` 2 + `security` 30 + `fraud` 14 + `local-web` 50 + `accessibility` 30), or **237** with `MONITORING_ENABLED=true`. The 50 `local-web` tests run only off CI, so the main CI matrix discovers 137 tests plus the separate non-blocking 50-test monitoring job. Environment- and opt-in-gated cases may report as skipped.
 
 ### ***Environment files***
 
@@ -575,14 +575,14 @@ Local service URL variables used by `scripts/run-all-tests.sh`:
 The parallel pipeline in `.github/workflows/parallel-tests.yml` runs:
 
 - `typecheck`
-- The Playwright `organuz-api`, `agent`, `security`, `product`, and `accessibility` projects in parallel (a matrix).
+- The Playwright `organuz-api`, `agent`, `security`, `fraud`, `product`, and `accessibility` projects in parallel (a matrix).
 - A non-blocking `monitoring` job (live Govmap + Ofek checks) — `continue-on-error: true`, so an outage shows the job red and folds into the Allure report but never fails the green PR gate.
 - The FastAPI, Scalar API reference, Prometheus, and Grafana service smoke checks.
 - Allure 3 report generation.
 - GitHub Pages deployment for the Allure report on `main` or `master`.
 - GitHub Actions summary links for Allure, FastAPI, Scalar, and Grafana.
 
-> **Parity note:** the workflow's `strategy.matrix.project` is `organuz-api, agent, security, product, accessibility`; the `chromium` and `product-authenticated` shards stay disabled. The `local-web` project is deliberately **not** in the matrix because it self-skips on CI.
+> **Parity note:** the workflow's `strategy.matrix.project` is `organuz-api, agent, security, fraud, product, accessibility`; the `chromium` and `product-authenticated` shards stay disabled. The `local-web` project is deliberately **not** in the matrix because it self-skips on CI.
 
 The workflow summary includes:
 
@@ -613,6 +613,6 @@ Set these repository variables when the summary should point to externally reach
 
 Open [Architecture.html](Architecture.html) in a browser for a pastel, single-file visual overview of the Docker Compose services, the CLI flow, the GitHub Actions pipeline, report publishing, the QA agent orchestrator, the product matrix, the QA dashboard, and the project structure.
 
-The test suite is organized by subject under `tests/`: UI homepage/content/flows/support/diagnostics, accessibility, Organuz backend API contracts/resources/security/functions, product smoke/registration/matrix/role flows/API/support, agent coverage, backend penetration testing, local-only marketing e2e, and live external-dependency monitoring.
+The test suite is organized by subject under `tests/`: UI homepage/content, accessibility, Organuz backend API contracts, product API/auth/English/matrix/mobile/wizard/role coverage, agent coverage, backend penetration testing, product fraud/ATO, local-only marketing e2e, and live external-dependency monitoring.
 
 For the QA agent specifically — its architecture diagram, the orchestration loop, the design decisions it encodes, and how to swap stubs for real connectors — see [`src/agent/README.md`](src/agent/README.md).

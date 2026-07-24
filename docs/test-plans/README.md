@@ -19,7 +19,7 @@ removed, keep these plans in sync with the specs and with the counts in
 | # | Plan | Project(s) | Specs | Cases | Target |
 |---|------|-----------|-------|-------|--------|
 | 1 | [UI Sanity](01-ui-sanity.md) | `chromium` **(disabled)** | `tests/ui/**` | 12 | Marketing site (prod `www.organuz.ai`) |
-| 2 | [Product Public Sanity](02-product-public-sanity.md) | `product` | `tests/product/api/**` | 8 | Dev calculator (no login) |
+| 2 | [Product Public + English Sanity](02-product-public-sanity.md) | `product` | `tests/product/api/**`, `tests/product/en/**` | 14 | Dev calculator (no login) |
 | 3 | [Product Matrix & Role Contracts](03-product-matrix-contract.md) | `product` | `tests/product/matrix/**` | 23 | Offline — checked-in fixtures |
 | 4 | [Product Roles E2E](04-product-roles-e2e.md) | `product-setup` → `product-authenticated` **(disabled)** | `tests/product/flows/**` | 13 | Dev calculator (per-role login) |
 | 5 | [Organuz API Contracts](05-organuz-api.md) | `organuz-api` | `tests/organuz-api/**` | 1 | Organuz Supabase / PostgREST |
@@ -28,14 +28,17 @@ removed, keep these plans in sync with the specs and with the counts in
 | 8 | [Security (penetration testing)](08-security.md) | `security` | `tests/security/**` | 30 | Organuz Supabase / PostgREST (anon key) |
 | 9 | [Local Web (local-only marketing e2e)](09-local-web.md) | `local-web` | `tests/local-web/**` | 50 | Marketing site (prod `www.organuz.ai`) — self-skips on CI |
 | 10 | [Accessibility](10-accessibility.md) | `accessibility` | `tests/accessibility/**` | 30 | Marketing site (prod `www.organuz.ai`) — local + CI |
+| 11 | [Product Fraud / ATO](11-fraud.md) | `fraud` | `tests/fraud/**` | 14 | Product app origin + auth backend (dev by default) |
+| 12 | [Product Interactive UI](12-product-interactions.md) | `product` | `tests/product/auth/**`, `mobile/**`, `wizard/**` | 23 | Dev calculator — cellular login, mobile, and wizard |
 
 Plans **1 and 4 are currently DISABLED** — their projects are commented out in
 `playwright.config.ts` (spec files retained; re-enable by uncommenting). Their
 case counts above describe the specs as written, not the current default run.
 
-**Default run** (`npx playwright test`): **150 tests**, all green, across six
-projects — `product` 37 (public sanity 8 + matrix/role contracts 23 + the rest),
-`local-web` 50, `accessibility` 30, `security` 30, `agent` 2, and `organuz-api` 1. Plans **1 and 4
+**Default run** (`npx playwright test`): **187 discovered tests** across seven
+projects — `product` 60 (public/English sanity 14 + matrix/role contracts 23
+and interactive UI 23), `local-web` 50, `accessibility` 30, `security` 30,
+`fraud` 14, `agent` 2, and `organuz-api` 1. Plans **1 and 4
 are disabled** (their projects are commented out in `playwright.config.ts`), so
 the marketing UI sanity and the product roles e2e do not run in the default
 suite. Re-enable a group by uncommenting its project; the plan for each group
@@ -52,7 +55,7 @@ and Ofek (govmap 25 + ofek 25). It is **never** part of the default suite, so an
 outage at Govmap or Ofek can't break the PR gate. Instead it runs on the
 scheduled **External API Monitoring** workflow and alerts through an
 auto-managed GitHub issue plus Slack. With monitoring enabled, the total is
-**200** (default 150 + monitoring 50).
+**237** (default 187 + monitoring 50).
 
 ## Sanctioned skips (never failures)
 
@@ -73,6 +76,9 @@ auto-managed GitHub issue plus Slack. With monitoring enabled, the total is
   specs run (and pass) on a developer machine and are simply skipped on GitHub
   Actions; the `local-web` project is not in the CI matrix. Sanctioned
   local/CI divergence.
+- **Group 12 (product interactive UI):** live geocode-driving wizard cases
+  self-skip on CI; the real OTP-send case requires `PRODUCT_OTP_UI=true`;
+  authenticated characterization requires `PRODUCT_WIZARD_E2E=true`.
 
 Everything else must pass. See `CLAUDE.md` → "Conventions" for the full policy.
 
