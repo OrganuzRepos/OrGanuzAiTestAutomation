@@ -7,6 +7,7 @@ import {
 import { unlockProductEnvironment } from './env-gate';
 import { OtpUnavailableError, AppUnavailableError, APP_UNAVAILABLE_REASON } from './errors';
 import { LanguageMenu } from './LanguageMenu';
+import { WIZARD } from './steps/wizardControls';
 import { anyLoginEntry, productChrome } from '../../../src/i18n/product';
 import { allureStep } from '../../../src/utils/allure';
 
@@ -303,7 +304,7 @@ export class ProductAppPage {
 
     await this.clickPrimaryContinue(); // בוא נמשיך → /address/get-address
     await this.clickFirstVisible([
-      this.page.getByRole('button', { name: /זהו הנכס המבוקש|אפשר להמשיך/ }),
+      this.page.getByRole('button', { name: WIZARD.confirmProperty }),
     ]);
 
     // Satellite scan runs, then routes to the roof-marking step with a runtime id.
@@ -315,7 +316,7 @@ export class ProductAppPage {
 
   /** Click the wizard's primary "continue" button (בוא נמשיך) once it is enabled. */
   private async clickPrimaryContinue(): Promise<void> {
-    const cont = this.page.getByRole('button', { name: 'בוא נמשיך' }).last();
+    const cont = this.page.getByRole('button', { name: WIZARD.continue }).last();
     await expect(cont).toBeEnabled({ timeout: 20_000 });
     await allureStep('Click primary continue', () => cont.click());
   }
@@ -488,7 +489,7 @@ export class ProductAppPage {
   async isAppShellLoaded(): Promise<boolean> {
     const shell = this.page
       .getByRole('button', { name: /בית פרטי/ })
-      .or(this.page.getByRole('list', { name: 'התקדמות השלבים' }))
+      .or(this.page.getByRole('list', { name: WIZARD.stepTrackerList }))
       .first();
     return shell.isVisible({ timeout: 15_000 }).catch(() => false);
   }

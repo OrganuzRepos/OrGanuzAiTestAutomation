@@ -2,11 +2,17 @@ import { test as base } from '../../../src/fixtures';
 import { ProductFlows } from './ProductFlows';
 import { RegistrationFlows } from './RegistrationFlows';
 import { withTokenFixtures } from '../../../src/fixtures/token-fixtures';
+import { withCalculatorStepFixtures } from './step-fixtures';
+import { withCalculatorFlowFixtures } from './flow-fixtures';
 import { authFile, hasSavedSession } from './auth';
 import type { ProductPersonaId } from '../matrix/e2e-matrix.data';
 
 // Re-export the token-fixture types so specs can import them from the domain fixture.
 export type { ProductTokenSetup, ProductAuthTokenSetup } from '../../../src/types/token.types';
+// Re-export the calculator page-object + flow fixture types (stepTracker/addressStep/
+// propertyConfirm/calculatorFlow) so specs can type them from the domain fixture.
+export type { CalculatorStepFixtures } from './step-fixtures';
+export type { CalculatorFlowFixtures } from './flow-fixtures';
 
 /**
  * Product-app test fixture: exposes `product` (high-level ProductFlows) on top of
@@ -43,6 +49,11 @@ const productTest = base.extend<{
   },
 });
 
-export const test = withTokenFixtures(productTest);
+// Layer the fixtures: step page objects (pages) → calculator flow (mid-layer, depends on
+// the pages + `product`) → token extractors. So every product test gets stepTracker/
+// addressStep/propertyConfirm (pages), calculatorFlow (flow), and the token fixtures.
+export const test = withTokenFixtures(
+  withCalculatorFlowFixtures(withCalculatorStepFixtures(productTest)),
+);
 
 export { expect } from '@playwright/test';
