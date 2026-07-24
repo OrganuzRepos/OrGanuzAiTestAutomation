@@ -1,0 +1,17 @@
+server {
+    listen       ${PORT};
+    server_name  _;
+    root         /usr/share/nginx/html;
+    index        index.html;
+
+    # The Allure entry point must never be cached. Allure regenerates its JS/CSS
+    # with a new content-hash every run and deletes the previous bundles, so a
+    # stale cached index.html points at a now-404 bundle and renders blank.
+    location = /index.html {
+        add_header Cache-Control "no-store" always;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}
