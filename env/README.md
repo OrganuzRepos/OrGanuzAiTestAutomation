@@ -19,6 +19,19 @@ Per-role login uses `<ROLE>_PHONE` / `<ROLE>_OTP_CODE` for `CUSTOMER`,
 `CONSULTANT`, `COMPANY` (resolved env-aware in `tests/product/support/roleCredentials.ts`,
 which also accepts a legacy `<ENV>_<ROLE>_PHONE` fallback). Dev uses the fixed OTP `7777`.
 
+## Opt-in product and fraud probes
+
+These flags are off by default because they send an OTP, create product data, or
+enable diagnostic-only behavior:
+
+| Variable | Effect |
+| --- | --- |
+| `PRODUCT_OTP_UI=true` | Enables the cellular-login check that requests a real dev OTP. |
+| `PRODUCT_WIZARD_E2E=true` | Enables authenticated characterization that can create a real dev project. |
+| `FRAUD_AUTH_BACKEND` | Overrides the product auth-backend origin for fraud/ATO checks. |
+| `FRAUD_APP_TOKEN` | Overrides the public app token used by the fraud suite. |
+| `FRAUD_OTP_VERIFY_CALL` | Names the live OTP verify method required by gated fraud probes. |
+
 ## Setup
 
 ```bash

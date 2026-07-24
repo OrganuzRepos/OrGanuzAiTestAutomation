@@ -136,19 +136,18 @@ npm run agent:current-tests
 
 This keeps Azure DevOps, Google Sheets, and OneDrive stubbed (replaced by
 in-memory fakes), but uses `CliPlaywrightRunner` to invoke the real Playwright
-CLI. The generated suite maps one orchestrator case to each logical Playwright
-slice; product maps to both product projects:
+CLI. The generated suite currently maps three orchestrator cases to the active
+repository projects represented by `src/agent/run-current-tests.ts`:
 
-- `PW-ORGANUZ-API` -> `npx playwright test --project=organuz-api`
-- `PW-CHROMIUM` -> `npx playwright test --project=chromium`
-- `PW-PRODUCT` -> `npx playwright test --project=product --grep "Product calculator and quotation E2E matrix"`
+- `PW-API` -> `npx playwright test --project=organuz-api`
+- `PW-PRODUCT` -> `npx playwright test --project=product`
 - `PW-AGENT` -> `npx playwright test --project=agent`
 
 Set `WEB_BASE_URL`, `QA_TARGET_ENV`, or `APP_BASE_URL` before running if you want
 to point the UI or product projects at non-default targets. The product live
 browser flows stay gated (held back) unless `PRODUCT_E2E_ENABLED=true` and persona
-credentials are present. The non-product projects are filtered by their Playwright
-project config down to the five `@other-smoke` checks. The command exits non-zero
+credentials are present. `organuz-api` and `agent` are filtered by their Playwright
+project configuration to their `@other-smoke` checks. The command exits non-zero
 (signals failure) if any mapped project fails or becomes blocked.
 
 The current-test runner keeps the external systems stubbed:

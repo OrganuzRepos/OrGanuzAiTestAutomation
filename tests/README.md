@@ -6,22 +6,16 @@ Tests are grouped by subject so each Playwright project stays easy to scan.
 | --- | --- | --- |
 | UI homepage | `tests/ui/homepage/` | Hero, navigation, contact, and homepage shell checks (`chromium` project — currently disabled). |
 | UI content | `tests/ui/content/` | Blog, FAQ, agents, projects, and static page coverage (disabled). |
-| UI flows | `tests/ui/flows/` | Cross-section critical user journeys (disabled). |
-| UI diagnostics | `tests/ui/diagnostics/` | Expected-failure checks for artifact capture (disabled). |
 | Local web | `tests/local-web/` | Local-only marketing-site e2e vs prod `www.organuz.ai`; every spec self-skips on CI (`local-web` project). |
 | Security | `tests/security/` | Authorized, safe-by-default backend penetration tests (`SEC-01…SEC-30`, incl. account takeover; `security` project). |
 | Fraud / ATO | `tests/fraud/` | Fourteen authorized, non-destructive product-app fraud and account-takeover checks. |
 | Accessibility | `tests/accessibility/` | Thirty CI-enabled WCAG/Axe and semantic regression checks for the marketing homepage. |
 | Organuz API contracts | `tests/organuz-api/contracts/` | Supabase/PostgREST `projects` schema and response contract coverage. |
-| Organuz API resources | `tests/organuz-api/resources/` | `projects` query behaviours (select, order, filter, count). |
-| Organuz API security | `tests/organuz-api/security/` | Anon-key auth, RLS, and negative cases. |
-| Organuz API functions | `tests/organuz-api/functions/` | Edge-function CORS preflight checks (no live POSTs). |
-| Product smoke | `tests/product/smoke/` | Credential-free public calculator shell checks. |
 | Product API | `tests/product/api/` | Public product token sanity + public-app-sanity checks. |
 | Product auth | `tests/product/auth/` | Signed-out cellular login dialog and opt-in OTP-step coverage. |
 | Product English | `tests/product/en/` | Public English-language calculator sanity checks. |
 | Product matrix | `tests/product/matrix/` | Offline persona/role data-contract specs over checked-in matrix fixtures. |
-| Product mobile | `tests/product/mobile/` | Pixel/Galaxy responsive checks plus an opt-in navigation diagnostic. |
+| Product mobile | `tests/product/mobile/` | Pixel/Galaxy responsive shell, overflow, and login-dialog checks. |
 | Product wizard | `tests/product/wizard/` | Calculator wizard and customer-process browser journeys. |
 | Product flows | `tests/product/flows/` | Live per-role browser specs (`product-authenticated` project — currently disabled). |
 | Product support | `tests/product/support/` | Product app page helpers, `ProductFlows`, fixtures, and the `product-setup` auth (`auth.setup.ts` + `auth.ts` save each role's `storageState` for reuse). |
@@ -38,7 +32,7 @@ projects are **currently disabled** — commented out in `playwright.config.ts`,
 spec files retained. Re-enable one by uncommenting its block. The projects and their globs
 are:
 
-- `product` *(active, 61 discovered tests)*: `tests/product/**/*.spec.ts` excluding `flows/**` — API/public sanity (8), cellular login (9), English sanity (6), matrix/role contracts (23), mobile (7, including one opt-in diagnostic), and wizard/customer-process coverage (8). Targets the calculator app for the selected `QA_TARGET_ENV` (default dev).
+- `product` *(active, 60 discovered tests)*: `tests/product/**/*.spec.ts` excluding `flows/**` — API/public sanity (8), cellular login (9), English sanity (6), matrix/role contracts (23), mobile (6), and wizard/customer-process coverage (8). Targets the calculator app for the selected `QA_TARGET_ENV` (default dev).
 - `organuz-api` *(active, 1 test)*: `tests/organuz-api/**/*.spec.ts`, default-filtered to `@other-smoke`
 - `agent` *(active, 2 tests)*: `tests/agent/**/*.spec.ts`, default-filtered to `@other-smoke`
 - `security` *(active, 30 tests)*: `tests/security/**/*.spec.ts` — authorized, safe-by-default penetration testing of the Organuz Supabase backend with the public anon key, incl. the `SEC-21…SEC-30` account-takeover checks. The INSERT and unqualified DELETE denial probes skip unless a disposable target is explicitly acknowledged with `SECURITY_WRITE_PROBES=true` and an exact `SECURITY_WRITE_TARGET`.
@@ -55,10 +49,10 @@ are:
   block/challenge page — a geo/bot block rather than a real outage — via the `beforeEach`
   canary in `tests/monitoring/support/availability.ts`.
 
-The default suite therefore discovers **188 tests** (`product` 61 + `organuz-api` 1 + `agent` 2 +
-`security` 30 + `fraud` 14 + `local-web` 50 + `accessibility` 30), or **238** with `MONITORING_ENABLED=true`.
+The default suite therefore discovers **187 tests** (`product` 60 + `organuz-api` 1 + `agent` 2 +
+`security` 30 + `fraud` 14 + `local-web` 50 + `accessibility` 30), or **237** with `MONITORING_ENABLED=true`.
 Because the 50 `local-web` specs self-skip on CI (and the project is absent from the CI
-matrix), the main CI matrix discovers the other 138 active tests plus the non-blocking 50-test `monitoring` job. The
+matrix), the main CI matrix discovers the other 137 active tests plus the non-blocking 50-test `monitoring` job. The
 `organuz-api` and `agent` projects run only their `@other-smoke`-tagged checks (a tag that
 marks the lightweight sanity subset). The disabled `chromium` / `product-setup` /
 `product-authenticated` specs still live in the repo, but the default config does not select
@@ -91,5 +85,5 @@ full property-owner signup test completes OTP and creates a fresh account.
 The active product project also contains explicit gates for side-effecting or diagnostic
 paths: `PRODUCT_OTP_UI=true` enables the real OTP-send UI check,
 `PRODUCT_WIZARD_E2E=true` enables authenticated characterization that creates a dev
-project, and `MOBILE_NAV_EXPLORE=true` enables the temporary mobile-navigation probe.
+project.
 Geocode-driving wizard cases self-skip on CI; deterministic wizard and mobile checks still run.

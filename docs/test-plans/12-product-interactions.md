@@ -1,4 +1,4 @@
-# Test Plan 12 — Product Interactive UI
+# Test Plan 12 - Product Interactive UI
 
 | | |
 |---|---|
@@ -40,4 +40,3 @@ npx playwright test --project=product tests/product/auth tests/product/mobile te
 PRODUCT_OTP_UI=true npx playwright test --project=product tests/product/auth/cellular-login.spec.ts
 PRODUCT_WIZARD_E2E=true npx playwright test --project=product tests/product/wizard
 ```
-

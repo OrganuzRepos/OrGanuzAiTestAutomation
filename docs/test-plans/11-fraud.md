@@ -1,4 +1,4 @@
-# Test Plan 11 — Product Fraud and Account-Takeover Controls
+# Test Plan 11 - Product Fraud and Account-Takeover Controls
 
 | | |
 |---|---|
@@ -36,9 +36,9 @@ its auth/RPC gateway.
 
 ## Configuration
 
-- `FRAUD_AUTH_BACKEND` — optional auth-backend origin override.
-- `FRAUD_APP_TOKEN` — optional public app-token override.
-- `FRAUD_OTP_VERIFY_CALL` — names the live verify method for gated OTP probes.
+- `FRAUD_AUTH_BACKEND` - optional auth-backend origin override.
+- `FRAUD_APP_TOKEN` - optional public app-token override.
+- `FRAUD_OTP_VERIFY_CALL` - names the live verify method for gated OTP probes.
 
 ## Run
 
@@ -46,4 +46,3 @@ its auth/RPC gateway.
 npx playwright test --project=fraud
 QA_TARGET_ENV=prod npx playwright test --project=fraud
 ```
-
