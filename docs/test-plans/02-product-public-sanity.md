@@ -1,19 +1,20 @@
-# Test Plan 2 — Product Public Sanity (No-Login Dev Calculator)
+# Test Plan 2 — Product Public and English Sanity
 
 | | |
 |---|---|
 | **Project** | `product` |
-| **Specs** | `tests/product/api/public-app-sanity.spec.ts`, `tests/product/api/token-sanity.spec.ts` |
+| **Specs** | `tests/product/api/public-app-sanity.spec.ts`, `tests/product/api/token-sanity.spec.ts`, `tests/product/en/public-app-en-sanity.spec.ts` |
 | **Default filter** | none (all specs in `product` run) |
 | **Target** | Dev calculator — `QA_TARGET_ENV` (default **dev** `dev1.app.organize.organuz.com`) |
 | **Page object** | `tests/product/support/ProductAppPage.ts` |
-| **Cases** | 8 (5 public-app + 3 token) |
+| **Cases** | 14 (5 public-app + 3 token + 6 English UI) |
 | **Skips** | Only on a genuine dev outage (gateway/gate down, no UI token) |
 | **Skill** | `product-public-sanity` |
 
 ## Scope
 
-Public, no-login checks against the live dev product calculator. The tests open
+Public, no-login checks against the live dev product calculator in Hebrew and
+English. The tests open
 the app through the shared password gate (`PRODUCT_PLATFORM_PASSWORD`), confirm
 the calculator shell loads for a signed-out visitor, and verify the front-end's
 backend token. "Token" here means the credential the UI sends with its backend
@@ -56,10 +57,21 @@ personal data.
 | TOK-02 | The extracted token matches the bundle public token in config | UI token equals the public token in `config.json` | — |
 | TOK-03 | Every UI backend call sends the token in the body over HTTPS, never the URL | Token only in request body over HTTPS; never a query param | `@security` |
 
+### `public-app-en-sanity.spec.ts` — "English calculator (EN) sanity" (`@product @sanity @en`)
+
+| ID | Case | Asserts |
+|----|------|---------|
+| EN-01 | Switch the calculator to English | Language becomes English and document direction is LTR |
+| EN-02 | Render the six-step progress tracker in English | English wizard progress landmark is visible |
+| EN-03 | Expose the English primary continue control | English continue button is visible |
+| EN-04 | Keep a fresh English visitor signed out | No session exists and the English login entry is visible |
+| EN-05 | Persist English across reload | Stored language choice survives page reload |
+| EN-06 | Serve the English app securely | URL uses HTTPS and the configured product host |
+
 ## Run
 
 ```bash
-QA_TARGET_ENV=dev npx playwright test --project=product tests/product/api
+QA_TARGET_ENV=dev npx playwright test --project=product tests/product/api tests/product/en
 ```
 
 ## Notes

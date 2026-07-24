@@ -19,7 +19,7 @@ removed, keep these plans in sync with the specs and with the counts in
 | # | Plan | Project(s) | Specs | Cases | Target |
 |---|------|-----------|-------|-------|--------|
 | 1 | [UI Sanity](01-ui-sanity.md) | `chromium` **(disabled)** | `tests/ui/**` | 12 | Marketing site (prod `www.organuz.ai`) |
-| 2 | [Product Public Sanity](02-product-public-sanity.md) | `product` | `tests/product/api/**` | 8 | Dev calculator (no login) |
+| 2 | [Product Public + English Sanity](02-product-public-sanity.md) | `product` | `tests/product/api/**`, `tests/product/en/**` | 14 | Dev calculator (no login) |
 | 3 | [Product Matrix & Role Contracts](03-product-matrix-contract.md) | `product` | `tests/product/matrix/**` | 23 | Offline — checked-in fixtures |
 | 4 | [Product Roles E2E](04-product-roles-e2e.md) | `product-setup` → `product-authenticated` **(disabled)** | `tests/product/flows/**` | 13 | Dev calculator (per-role login) |
 | 5 | [Organuz API Contracts](05-organuz-api.md) | `organuz-api` | `tests/organuz-api/**` | 1 | Organuz Supabase / PostgREST |
@@ -36,7 +36,7 @@ Plans **1 and 4 are currently DISABLED** — their projects are commented out in
 case counts above describe the specs as written, not the current default run.
 
 **Default run** (`npx playwright test`): **187 discovered tests** across seven
-projects — `product` 60 (public sanity 8 + matrix/role contracts 23 + English 6
+projects — `product` 60 (public/English sanity 14 + matrix/role contracts 23
 and interactive UI 23), `local-web` 50, `accessibility` 30, `security` 30,
 `fraud` 14, `agent` 2, and `organuz-api` 1. Plans **1 and 4
 are disabled** (their projects are commented out in `playwright.config.ts`), so
