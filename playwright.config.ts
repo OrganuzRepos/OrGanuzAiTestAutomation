@@ -89,7 +89,11 @@ export default defineConfig({
   use: {
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    trace: 'on-first-retry',
+    // Record a trace for every test but keep it only when the test fails (works
+    // with retries:0 locally, unlike 'on-first-retry'). The retained trace.zip is
+    // attached automatically to both the HTML report (interactive Trace viewer)
+    // and the Allure report (allure-playwright picks up the attachment).
+    trace: 'retain-on-failure',
     // Slow-motion for debug/human-watch runs (browser projects only; no-op at 0).
     ...(slowMoMs > 0 ? { launchOptions: { slowMo: slowMoMs } } : {}),
   },
