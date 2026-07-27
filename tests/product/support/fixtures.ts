@@ -5,6 +5,7 @@ import { withTokenFixtures } from '../../../src/fixtures/token-fixtures';
 import { withCalculatorStepFixtures } from './step-fixtures';
 import { withCalculatorFlowFixtures } from './flow-fixtures';
 import { withAuthFixtures } from './auth-fixtures';
+import { withProductPageFixtures } from './product-page-fixtures';
 import { authFile, hasSavedSession } from './auth';
 import type { ProductPersonaId } from '../matrix/e2e-matrix.data';
 
@@ -16,6 +17,7 @@ export type { ProductTokenSetup, ProductAuthTokenSetup } from '../../../src/type
 export type { CalculatorStepFixtures } from './step-fixtures';
 export type { CalculatorFlowFixtures } from './flow-fixtures';
 export type { AuthFixtures } from './auth-fixtures';
+export type { ProductPageFixtures } from './product-page-fixtures';
 
 /**
  * Product-app test fixture: exposes `product` (high-level ProductFlows) on top of
@@ -32,9 +34,7 @@ export type { AuthFixtures } from './auth-fixtures';
  * The token-extractor setup fixtures (`productToken`, `productAuthToken`) are layered
  * on via withTokenFixtures — see token-fixtures.ts.
  */
-const productTest = base.extend<{
-  product: ProductFlows;
-  registration: RegistrationFlows;
+const productBase = base.extend<{
   authRole?: ProductPersonaId;
 }>({
   authRole: [undefined, { option: true }],
@@ -43,21 +43,29 @@ const productTest = base.extend<{
     await use(authRole && hasSavedSession(authRole) ? authFile(authRole) : undefined);
   },
 
-  product: async ({ page }, use) => {
-    await use(new ProductFlows(page));
-  },
+});
 
-  registration: async ({ page }, use) => {
-    await use(new RegistrationFlows(page));
+// Page fixture dependency graph: LoginDialog → focused product sub-pages → ProductAppPage.
+const productPageTest = withProductPageFixtures(withAuthFixtures(productBase));
+
+// High-level flows consume the fixture-built ProductAppPage; no page object is constructed
+// from inside a flow.
+const productTest = productPageTest.extend<{
+  product: ProductFlows;
+  registration: RegistrationFlows;
+}>({
+  product: async ({ page, productApp }, use) => {
+    await use(new ProductFlows(page, productApp));
+  },
+  registration: async ({ page, product }, use) => {
+    await use(new RegistrationFlows(page, product));
   },
 });
 
-// Layer the fixtures: cellular-login page object + step page objects (pages) → calculator
-// flow (mid-layer, depends on the step pages + `product`) → token extractors. So every
-// product test gets loginDialog, stepTracker/addressStep/propertyConfirm (pages),
-// calculatorFlow (flow), and the token fixtures.
+// Layer the remaining fixtures: calculator step pages → calculator flow → token extractors.
+// Every product test can request either a narrow page fixture or the compatibility facade.
 export const test = withTokenFixtures(
-  withCalculatorFlowFixtures(withCalculatorStepFixtures(withAuthFixtures(productTest))),
+  withCalculatorFlowFixtures(withCalculatorStepFixtures(productTest)),
 );
 
 export { expect } from '@playwright/test';
