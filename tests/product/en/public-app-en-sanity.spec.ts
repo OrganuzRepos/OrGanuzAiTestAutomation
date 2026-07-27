@@ -49,7 +49,12 @@ test.describe('English calculator (EN) sanity', { tag: ['@product', '@sanity', '
     await allureStory('wizard tracker');
     await allureSeverity('critical');
     await openEnglishOrSkip(product);
-    await expect(page.getByRole('list', { name: productText.en.wizardProgress })).toBeVisible();
+    // At the 600x800 (narrow) viewport the desktop stage list collapses to the English
+    // "Step N of M" indicator, so assert that — it confirms both the tracker and English.
+    await expect(
+      page.getByText(/Step\s+\d+\s+of\s+\d+/i).first(),
+      'the English wizard step indicator renders',
+    ).toBeVisible();
   });
 
   // @KNOWN_BUGS: the English address-search entry ("Search by Address") does not render
@@ -62,12 +67,12 @@ test.describe('English calculator (EN) sanity', { tag: ['@product', '@sanity', '
     await expect(page.getByRole('button', { name: productText.en.continue }).first()).toBeVisible();
   });
 
-  test('a fresh visitor is signed out on the English calculator', { tag: '@KNOWN_BUGS' }, async ({ product, page }) => {
+  test('a fresh visitor is signed out on the English calculator', { tag: '@KNOWN_BUGS' }, async ({ product }) => {
     await allureStory('signed-out state');
     await allureSeverity('normal');
     await openEnglishOrSkip(product);
     expect(await product.app.isAuthenticated(), 'no session for a fresh visitor').toBe(false);
-    await expect(page.getByRole('button', { name: productText.en.loginEntry }).first()).toBeVisible();
+    await expect(product.app.loginEntryPoint.first()).toBeVisible();
   });
 
   test('the English language choice persists across a reload', async ({ product, page }) => {
