@@ -1,11 +1,15 @@
 /**
  * End-to-end coverage of the public property-characterization wizard on the dev
- * calculator (the multi-step "התקדמות השלבים" flow — see the organuz-product-e2e skill).
+ * calculator (the multi-step "התקדמות השלבים" flow — see the organuz-product-e2e skill),
+ * exercised through the layered fixtures: step page objects (stepTracker / addressStep)
+ * → the mid-layer `calculatorFlow` → these specs. No raw locators live here — selectors
+ * are owned by the step page objects (src/pages/product/*).
  *
- * These three checks are NON-mutating: they drive step 1 only (property type + address
- * autocomplete) and never trigger the satellite scan, so no project is created. The first
- * two are deterministic and always run when the dev app is up (skipOnOutage); the third
- * drives the LIVE address geocode, which is geo-blocked/flaky on CI runners, so it is
+ * These checks are NON-mutating: they drive step 1 (property type + address autocomplete)
+ * and — for the last check — advance into the step-2 property confirmation, but never
+ * click confirm, so no satellite scan runs and no project is created. The first two are
+ * deterministic and always run when the dev app is up (skipOnOutage); the last two drive
+ * the LIVE address geocode, which is geo-blocked/flaky on CI runners, so they are
  * LOCAL-ONLY via skipGeocodeDrivingOnCi() — a sanctioned CI divergence, like local-web.
  *
  * The authenticated portion (scan → roof → results) requires customer login before the
@@ -13,12 +17,14 @@
  */
 import { test, expect } from '../support/fixtures';
 import { skipOnOutage, skipGeocodeDrivingOnCi } from '../support/envGate';
-import { MAIN_PROPERTY_CHARACTERIZATION, PROPERTY_TYPE_LABELS } from '../matrix/e2e-matrix.data';
+import { MAIN_PROPERTY_CHARACTERIZATION } from '../matrix/e2e-matrix.data';
 import { allureEpic, allureFeature, allureStory, allureSeverity } from '../../../src/utils/allure';
 
 const scenario = MAIN_PROPERTY_CHARACTERIZATION;
-// The Hebrew property-type LABEL (getByRole name), distinct from the type KEY used elsewhere.
-const PRIVATE_HOUSE_LABEL = PROPERTY_TYPE_LABELS.PROPERTY_TYPE_PRIVATE_HOUSE;
+// The property-type KEY (mapped to its Hebrew label inside AddressStep), not the label itself.
+const PRIVATE_HOUSE_TYPE = scenario.propertyType;
+// A concrete Kiryat Motzkin address (Hebrew DOM data constant — must match the live geocode).
+const KIRYAT_MOTZKIN_ADDRESS = 'החשמונאים 22 קרית מוצקין';
 
 test.describe('Calculator characterization wizard', { tag: ['@product', '@wizard'] }, () => {
   // The satellite scan + AI boundary detection are slow; widen the per-test budget.
@@ -31,43 +37,62 @@ test.describe('Calculator characterization wizard', { tag: ['@product', '@wizard
 
   // --- Step 1: non-mutating (no project is created) ------------------------
 
-  test('Step 1 renders the property-type buttons and the step tracker', async ({ product, page }) => {
+  test('Step 1 renders the property-type buttons and the step tracker', async ({ calculatorFlow }) => {
     await allureStory('Step tracker');
     await allureSeverity('critical');
-    await skipOnOutage(() => product.openCalculator());
+    await skipOnOutage(() => calculatorFlow.open());
 
-    await expect(page.getByRole('list', { name: 'התקדמות השלבים' })).toBeVisible();
-    await expect(page.getByRole('button', { name: PRIVATE_HOUSE_LABEL })).toBeVisible();
+    expect(await calculatorFlow.tracker.isVisible(), 'the step tracker rendered').toBe(true);
+    await expect(calculatorFlow.address.propertyTypeButtons[PRIVATE_HOUSE_TYPE]).toBeVisible();
   });
 
-  test('The continue button is gated until a property type and address are chosen', async ({ product, page }) => {
+  test('The continue button is gated until a property type and address are chosen', async ({ calculatorFlow }) => {
     await allureStory('Step 1 gating');
     await allureSeverity('normal');
-    await skipOnOutage(() => product.openCalculator());
+    await skipOnOutage(() => calculatorFlow.open());
 
-    const cont = page.getByRole('button', { name: 'בוא נמשיך' }).last();
-    await expect(cont).toBeVisible();
-    await expect(cont, 'continue is disabled before any selection').toBeDisabled();
+    await expect(
+      calculatorFlow.address.continueButton,
+      'continue is disabled before any selection',
+    ).toBeDisabled();
   });
 
-  test('Choosing a property type and address suggestion enables step 1', async ({ product, page }) => {
+  test('Choosing a property type and address suggestion enables step 1', async ({ calculatorFlow }) => {
     skipGeocodeDrivingOnCi(); // drives the live address autocomplete — local-only
     await allureStory('Address autocomplete');
     await allureSeverity('normal');
-    await skipOnOutage(() => product.openCalculator());
+    await skipOnOutage(() => calculatorFlow.open());
 
-    await page.getByRole('button', { name: PRIVATE_HOUSE_LABEL }).click();
-    const address = page.getByRole('combobox').first();
-    await address.click();
-    // pressSequentially so the address autocomplete fires its key handlers (see the skill).
-    await address.pressSequentially(scenario.address, { delay: 60 });
-    await page.getByRole('option').first().waitFor({ state: 'visible', timeout: 20_000 });
-    await page.getByRole('option').first().click();
+    await calculatorFlow.address.choose(PRIVATE_HOUSE_TYPE, scenario.address);
 
     await expect(
-      page.getByRole('button', { name: 'בוא נמשיך' }).last(),
+      calculatorFlow.address.continueButton,
       'continue is enabled once type + address are set',
     ).toBeEnabled();
+  });
+
+  test('A specific Kiryat Motzkin address advances to the property-confirmation step', async ({ calculatorFlow }) => {
+    skipGeocodeDrivingOnCi(); // drives the live address geocode + confirmation — local-only
+    await allureStory('Property confirmation');
+    await allureSeverity('normal');
+    await skipOnOutage(() => calculatorFlow.open());
+
+    // Step 1: choose the property type + the Kiryat Motzkin address, then continue.
+    await expect(calculatorFlow.address.continueButton, 'continue is disabled before any selection').toBeDisabled();
+    await calculatorFlow.address.choose('PROPERTY_TYPE_BUILDING', KIRYAT_MOTZKIN_ADDRESS);
+    await expect(
+      calculatorFlow.address.continueButton,
+      'continue is enabled once the Kiryat Motzkin address is set',
+    ).toBeEnabled();
+
+    // Step 2: continue advances to the auto-located property confirmation ("מצאנו את הנכס המבוקש").
+    await calculatorFlow.address.continue();
+    await calculatorFlow.confirm.waitFor();
+    await expect(
+      calculatorFlow.confirm.banner,
+      'the property confirmation showed for the Kiryat Motzkin address',
+    ).toBeVisible();
+    await expect(calculatorFlow.confirm.confirmButton).toBeVisible();
   });
 
   // The authenticated portion (satellite scan → roof → results) requires customer login
