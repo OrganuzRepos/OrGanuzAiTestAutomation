@@ -47,25 +47,25 @@ export class OrSection {
 /** Sub-page-object for the agents section: heading + the six named agent cards. */
 export class AgentsSection {
   readonly heading: Locator;
+  /** Agent cards keyed by (English) brand name — the closed set from the marketing i18n. */
+  readonly agents: Record<string, Locator>;
 
-  constructor(private readonly page: Page) {
+  constructor(page: Page) {
     this.heading = selfHeal(
       page.getByRole('heading', { name: T.agents.heading }),
       page.getByRole('heading', { name: /סוכן לכל/ }),
     );
-  }
-
-  /** Locator for a single agent card, addressed by its (English) brand name. */
-  agent(name: string): Locator {
-    return selfHeal(
-      this.page.getByRole('heading', { name }),
-      this.page.getByText(name).first(),
+    this.agents = Object.fromEntries(
+      T.agents.names.map((name) => [
+        name,
+        selfHeal(page.getByRole('heading', { name }), page.getByText(name).first()),
+      ]),
     );
   }
 
   async expectAllAgentsVisible(): Promise<void> {
-    for (const name of T.agents.names) {
-      await expect(this.agent(name)).toBeVisible();
+    for (const card of Object.values(this.agents)) {
+      await expect(card).toBeVisible();
     }
   }
 }

@@ -7,7 +7,7 @@ import {
 import { unlockProductEnvironment } from './env-gate';
 import { OtpUnavailableError, AppUnavailableError, APP_UNAVAILABLE_REASON } from './errors';
 import { LanguageMenu } from './LanguageMenu';
-import { WIZARD } from './steps/wizardControls';
+import { WIZARD } from '../../../src/pages/product';
 import { anyLoginEntry, productChrome } from '../../../src/i18n/product';
 import { allureStep } from '../../../src/utils/allure';
 
@@ -40,8 +40,30 @@ export class ProductAppPage {
   /** Header language-menu sub-page-object (switch he↔en + read current language). */
   private readonly language: LanguageMenu;
 
+  /** The property-owner registration submit button ("הרשמה והתחברות"). */
+  readonly registrationSubmitButton: Locator;
+  /** Required terms consent checkbox ("תקנון האתר"). */
+  readonly registrationTermsCheckbox: Locator;
+  /** Optional marketing/updates consent checkbox; it must not gate registration. */
+  readonly registrationOptionalConsentCheckbox: Locator;
+  /** The header user-menu button, whose accessible name is "<name>, <role>". */
+  readonly userMenuButton: Locator;
+  /**
+   * The signed-out login entry point, matching either layout: the desktop text CTA
+   * ("הרשמה / כניסה" / "Login / Register") or the mobile account icon (a nameless button
+   * in the print-hidden header bar) that opens the account menu.
+   */
+  readonly loginEntryPoint: Locator;
+
   constructor(private readonly page: Page) {
     this.language = new LanguageMenu(page);
+    this.registrationSubmitButton = page.getByRole('button', { name: 'הרשמה והתחברות' });
+    this.registrationTermsCheckbox = page.getByRole('checkbox').first();
+    this.registrationOptionalConsentCheckbox = page.getByRole('checkbox').nth(1);
+    this.userMenuButton = page.getByRole('button', { name: /בעל נכס|יועץ|קבלן|חברת|יזם/ }).first();
+    this.loginEntryPoint = page
+      .getByRole('button', { name: anyLoginEntry })
+      .or(page.locator('.print_hide').getByRole('button'));
   }
 
   async login(credentials: ProductCredentials): Promise<ProductRuntimeIds> {
@@ -167,21 +189,6 @@ export class ProductAppPage {
     await expect(this.page.getByRole('heading', { name: 'הרשמת בעלי נכסים' })).toBeVisible({ timeout: 15_000 });
   }
 
-  /** The property-owner registration submit button ("הרשמה והתחברות"). */
-  registrationSubmitButton(): Locator {
-    return this.page.getByRole('button', { name: 'הרשמה והתחברות' });
-  }
-
-  /** Required terms consent checkbox ("תקנון האתר"). */
-  registrationTermsCheckbox(): Locator {
-    return this.page.getByRole('checkbox').first();
-  }
-
-  /** Optional marketing/updates consent checkbox; it must not gate registration. */
-  registrationOptionalConsentCheckbox(): Locator {
-    return this.page.getByRole('checkbox').nth(1);
-  }
-
   /** Fill the four registration text fields (name, phone, email) — not the consent boxes. */
   async fillCustomerRegistrationFields(account: NewCustomerAccount): Promise<void> {
     await allureStep('Fill registration first name', () =>
@@ -196,7 +203,7 @@ export class ProductAppPage {
 
   /** Tick the required terms consent ("תקנון האתר"); the first checkbox in the form. */
   async acceptRegistrationTerms(): Promise<void> {
-    const terms = this.registrationTermsCheckbox();
+    const terms = this.registrationTermsCheckbox;
     if (!(await terms.isChecked())) {
       await allureStep('Accept registration terms', () => terms.check());
     }
@@ -209,8 +216,8 @@ export class ProductAppPage {
    * take (dev OTP rate-limit / an already-registered phone).
    */
   async submitCustomerRegistration(otpCode: string): Promise<void> {
-    await expect(this.registrationSubmitButton()).toBeEnabled({ timeout: 10_000 });
-    await allureStep('Submit registration', () => this.registrationSubmitButton().click());
+    await expect(this.registrationSubmitButton).toBeEnabled({ timeout: 10_000 });
+    await allureStep('Submit registration', () => this.registrationSubmitButton.click());
 
     const otpHeading = this.page
       .getByRole('heading', { name: /הזנת קוד|verification|קוד אימות|enter.*code/i })
@@ -433,14 +440,9 @@ export class ProductAppPage {
     });
   }
 
-  /** The header user-menu button, whose accessible name is "<name>, <role>". */
-  userMenuButton(): Locator {
-    return this.page.getByRole('button', { name: /בעל נכס|יועץ|קבלן|חברת|יזם/ }).first();
-  }
-
   /** Open the header user menu (exposes "איזור אישי" and "התנתק"). */
   async openUserMenu(): Promise<void> {
-    await allureStep('Open user menu', () => this.userMenuButton().click());
+    await allureStep('Open user menu', () => this.userMenuButton.click());
   }
 
   /** Open the user menu and go to the personal area (…/pricing/my-offers). */
@@ -467,15 +469,12 @@ export class ProductAppPage {
   /**
    * Assert the app is signed out: back on the public calculator with the login
    * entry point available. After logout the login dialog sometimes auto-opens
-   * (heading "התחברות") and sometimes only the "הרשמה / כניסה" CTA shows — accept either.
+   * (heading "התחברות") and sometimes only the entry point shows — accept either.
    */
   async expectLoggedOut(): Promise<void> {
     await expect(this.page).toHaveURL(/\/calculator\//i);
     await expect(
-      this.page
-        .getByRole('button', { name: /הרשמה\s*\/\s*כניסה|הרשמה/ })
-        .or(this.page.getByRole('heading', { name: 'התחברות' }))
-        .first(),
+      this.loginEntryPoint.or(this.page.getByRole('heading', { name: 'התחברות' })).first(),
     ).toBeVisible();
   }
 
@@ -519,14 +518,12 @@ export class ProductAppPage {
     return this.isLoggedIn();
   }
 
-  /** True when the app is already authenticated (login entry point is gone). */
+  /** True when the app is already authenticated (the header user-menu button is present). */
   private async isLoggedIn(): Promise<boolean> {
-    // Matches the signed-out entry point in either language: Hebrew "הרשמה / כניסה"
-    // and English "Login / Register" (centralized in the product i18n dictionary).
-    const loginEntry = this.page.getByRole('button', { name: anyLoginEntry }).first();
-    // Give the header a moment to render, then treat "no login button" as logged in.
-    const loginVisible = await loginEntry.isVisible({ timeout: 4_000 }).catch(() => false);
-    return !loginVisible;
+    // Positive, layout-independent signal: signed-in shows the "<name>, <role>" user-menu
+    // button. The signed-OUT entry is a text CTA (desktop) or a nameless account icon
+    // (mobile) — neither matches the user-menu name — so both correctly read as signed out.
+    return this.userMenuButton.isVisible({ timeout: 4_000 }).catch(() => false);
   }
 
   private async openLoginDialogIfNeeded(): Promise<void> {

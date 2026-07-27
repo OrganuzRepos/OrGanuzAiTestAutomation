@@ -1,12 +1,10 @@
 import { TestType, Fixtures, PlaywrightTestArgs } from '@playwright/test';
-import { StepTracker } from './steps/StepTracker';
-import { AddressStep } from './steps/AddressStep';
-import { PropertyConfirmStep } from './steps/PropertyConfirmStep';
+import { StepTracker, AddressStep, PropertyConfirmStep } from '../../../src/pages/product';
 
 /**
  * Calculator step-page-object fixtures library.
  *
- * Exposes one thin, isolated page object per wizard step (kept in ./steps/*) as a lazy
+ * Exposes one thin, isolated page object per wizard step (kept in ./pages/*) as a lazy
  * fixture, so EVERY product test can compose the calculator steps without constructing
  * page objects itself. Composed onto the product base test via
  * `withCalculatorStepFixtures(baseTest)` in tests/product/support/fixtures.ts — the same

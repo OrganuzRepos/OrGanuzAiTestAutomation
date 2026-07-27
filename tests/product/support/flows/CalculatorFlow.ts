@@ -1,7 +1,5 @@
 import { ProductFlows } from '../ProductFlows';
-import { StepTracker } from '../steps/StepTracker';
-import { AddressStep } from '../steps/AddressStep';
-import { PropertyConfirmStep } from '../steps/PropertyConfirmStep';
+import { StepTracker, AddressStep, PropertyConfirmStep } from '../../../../src/pages/product';
 import type { ProductRuntimeIds } from '../ProductAppPage';
 import type { PropertyCharacterizationData } from '../../matrix/e2e-matrix.data';
 

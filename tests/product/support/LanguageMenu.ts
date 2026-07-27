@@ -21,8 +21,14 @@ export class LanguageMenu {
     if ((await this.current()) === locale) return;
     // Trigger shows the *current* language; the other locale is the menu option to pick.
     const other: ProductLocale = locale === 'en' ? 'he' : 'en';
-    await allureStep(`Open language menu (${productLangLabel[other]})`, () =>
-      this.page.getByRole('button', { name: productLangLabel[other] }).first().click());
+    const trigger = this.page.getByRole('button', { name: productLangLabel[other] }).first();
+    // Mobile: the language control lives inside the header account-icon menu (a nameless
+    // button in the print-hidden header bar), so open that first when the trigger is hidden.
+    if (!(await trigger.isVisible().catch(() => false))) {
+      await allureStep('Open header account menu (mobile)', () =>
+        this.page.locator('.print_hide').getByRole('button').first().click());
+    }
+    await allureStep(`Open language menu (${productLangLabel[other]})`, () => trigger.click());
     await allureStep(`Select language ${productLangLabel[locale]}`, () =>
       this.page
         .getByRole('menuitem', { name: productLangLabel[locale] })

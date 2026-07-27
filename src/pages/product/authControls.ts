@@ -1,4 +1,4 @@
-import { anyLoginEntry } from '../../../../src/i18n/product';
+import { anyLoginEntry } from '../../i18n/product';
 
 /**
  * Single source of truth for the cellular (phone + OTP) login dialog selectors, confirmed
@@ -8,6 +8,12 @@ import { anyLoginEntry } from '../../../../src/i18n/product';
 export const LOGIN = {
   /** Header CTA that opens the dialog ("הרשמה / כניסה" / EN "Login / Register"). */
   entry: anyLoginEntry,
+  /**
+   * Mobile layout only: the header collapses the text CTA into an account icon (no
+   * accessible name) that opens a menu; this is the "log in" menuitem inside it that
+   * actually opens the dialog. Desktop opens the dialog directly from `entry`.
+   */
+  mobileLoginEntry: 'התחבר',
   /** Dialog heading. */
   dialogHeading: 'התחברות',
   /** Mobile-number prompt paragraph. */

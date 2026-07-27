@@ -1,5 +1,5 @@
 import { Locator, Page } from '@playwright/test';
-import { allureStep } from '../../../../src/utils/allure';
+import { allureStep } from '../../utils/allure';
 import { WIZARD } from './wizardControls';
 
 /**
@@ -12,35 +12,31 @@ import { WIZARD } from './wizardControls';
  * of the customer process. Isolated page object exposed as the `propertyConfirm` fixture.
  */
 export class PropertyConfirmStep {
-  constructor(private readonly page: Page) {}
-
   /** The "we found the requested property" confirmation banner. */
-  banner(): Locator {
-    return this.page.getByText(WIZARD.propertyFoundBanner).first();
-  }
-
+  readonly banner: Locator;
   /** The confirm CTA ("זהו הנכס המבוקש, אפשר להמשיך"). */
-  confirmButton(): Locator {
-    return this.page.getByRole('button', { name: WIZARD.confirmProperty }).first();
-  }
-
+  readonly confirmButton: Locator;
   /** The post-confirm auth gate heading shown to signed-out visitors ("הרשמת בעלי נכסים"). */
-  authGateHeading(): Locator {
-    return this.page.getByRole('heading', { name: WIZARD.authGateHeading });
+  readonly authGateHeading: Locator;
+
+  constructor(page: Page) {
+    this.banner = page.getByText(WIZARD.propertyFoundBanner).first();
+    this.confirmButton = page.getByRole('button', { name: WIZARD.confirmProperty }).first();
+    this.authGateHeading = page.getByRole('heading', { name: WIZARD.authGateHeading });
   }
 
   /** Wait until the confirmation screen has rendered. */
   async waitFor(): Promise<void> {
-    await this.banner().waitFor({ state: 'visible', timeout: 45_000 });
+    await this.banner.waitFor({ state: 'visible', timeout: 45_000 });
   }
 
   /** Click confirm. As a signed-out visitor this surfaces the auth gate; authenticated it scans. */
   async confirm(): Promise<void> {
-    await allureStep('Confirm the located property', () => this.confirmButton().click());
+    await allureStep('Confirm the located property', () => this.confirmButton.click());
   }
 
   /** True when the auth gate appeared (i.e. login is required to run the scan). */
   async requiresLogin(): Promise<boolean> {
-    return this.authGateHeading().isVisible({ timeout: 15_000 }).catch(() => false);
+    return this.authGateHeading.isVisible({ timeout: 15_000 }).catch(() => false);
   }
 }
