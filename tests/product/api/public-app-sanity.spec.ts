@@ -37,16 +37,13 @@ test.describe('Public dev calculator sanity', { tag: ['@product', '@sanity'] }, 
     await product.expectLoggedOut();
   });
 
-  test('The login entry point is available to a signed-out visitor', async ({ product, page }) => {
+  test('The login entry point is available to a signed-out visitor', async ({ product }) => {
     await allureStory('Login entry point');
     await allureSeverity('critical');
     await skipOnOutage(() => product.openCalculator());
-    // The public entry point is the "Register / Sign in" button in the header; the phone
-    // field appears only after it is opened, so we assert the button itself.
-    const loginEntry = page
-      .getByRole('button', { name: /הרשמה\s*\/\s*כניסה|הרשמה|התחברות|sign in|log in/i })
-      .first();
-    await expect(loginEntry).toBeVisible();
+    // The public entry point is the header CTA on desktop, or the account icon on the mobile
+    // layout — loginEntryPoint() matches either. The phone field appears only after it opens.
+    await expect(product.app.loginEntryPoint.first()).toBeVisible();
   });
 
   test('The app is served over HTTPS from the configured dev host', async ({ product, page }) => {

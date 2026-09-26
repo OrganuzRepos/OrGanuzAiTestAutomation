@@ -51,9 +51,9 @@ test.describe('Customer calculator process', { tag: ['@product', '@wizard'] }, (
     await allureSeverity('normal');
     await skipOnOutage(() => calculatorFlow.open());
 
-    await expect(calculatorFlow.address.continueButton(), 'continue is disabled before any selection').toBeDisabled();
+    await expect(calculatorFlow.address.continueButton, 'continue is disabled before any selection').toBeDisabled();
     await calculatorFlow.address.choose(PRIVATE_HOUSE_TYPE, scenario.address);
-    await expect(calculatorFlow.address.continueButton(), 'continue enables once type + address are set').toBeEnabled();
+    await expect(calculatorFlow.address.continueButton, 'continue enables once type + address are set').toBeEnabled();
   });
 
   test('Locating a property advances to the confirmation step', async ({ calculatorFlow }) => {
@@ -63,8 +63,8 @@ test.describe('Customer calculator process', { tag: ['@product', '@wizard'] }, (
     await skipOnOutage(() => calculatorFlow.open());
 
     await calculatorFlow.locateProperty(PRIVATE_HOUSE_TYPE, scenario.address);
-    await expect(calculatorFlow.confirm.banner(), 'the "we found the property" confirmation showed').toBeVisible();
-    await expect(calculatorFlow.confirm.confirmButton()).toBeVisible();
+    await expect(calculatorFlow.confirm.banner, 'the "we found the property" confirmation showed').toBeVisible();
+    await expect(calculatorFlow.confirm.confirmButton).toBeVisible();
   });
 
   test('Confirming the property requires the customer to authenticate', async ({ calculatorFlow }) => {

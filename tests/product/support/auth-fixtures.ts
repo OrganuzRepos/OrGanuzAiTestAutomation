@@ -1,5 +1,5 @@
 import { TestType, Fixtures, PlaywrightTestArgs } from '@playwright/test';
-import { LoginDialog } from './steps/LoginDialog';
+import { LoginDialog } from '../../../src/pages/product';
 
 /**
  * Cellular-login fixture. Exposes the LoginDialog page object as a lazy `loginDialog`

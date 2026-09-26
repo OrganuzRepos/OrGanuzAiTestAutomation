@@ -27,6 +27,7 @@ enable diagnostic-only behavior:
 | Variable | Effect |
 | --- | --- |
 | `PRODUCT_OTP_UI=true` | Enables the cellular-login check that requests a real dev OTP. |
+| `PRODUCT_SMS_LOGIN=true` | Enables the SMS-OTP login e2e (`cellular-login-sms`) — a real SMS send + login, reading the code from Twilio (see below). |
 | `PRODUCT_WIZARD_E2E=true` | Enables authenticated characterization that can create a real dev project. |
 | `FRAUD_AUTH_BACKEND` | Overrides the product auth-backend origin for fraud/ATO checks. |
 | `FRAUD_APP_TOKEN` | Overrides the public app token used by the fraud suite. |
@@ -42,6 +43,24 @@ cp env/.prod.env.example env/.prod.env   # prod creds (optional locally)
 The real `env/.dev.env` / `env/.prod.env` are **gitignored** (Restricted — never
 commit). Only the `*.example` templates are committed. On CI the prod pipeline
 materializes `env/.prod.env` from the `DOTENV_PROD` repo secret.
+
+## SMS-OTP login (Twilio)
+
+Production (and any env sending a live SMS) delivers the login code by SMS rather than the
+dev fixed `7777`. The `cellular-login-sms` spec reads that code from **Twilio** and completes
+a real sign-in for the customer number. It works on **both** dev and prod (env-resolved via
+`QA_TARGET_ENV`) and is fully skip-safe — it needs all of:
+
+| Variable | Purpose |
+| --- | --- |
+| `PRODUCT_SMS_LOGIN=true` | Opt-in gate (a real SMS send + login). Off → the spec skips. |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` | Twilio REST creds used to read the inbound SMS. Absent → skip. |
+| `CUSTOMER_PHONE` | The cellular number typed at login (from this env file). |
+| `TWILIO_OTP_NUMBER` | *Optional* — the Twilio number that receives the code, if it differs from `CUSTOMER_PHONE`. |
+
+Restricted — the real values live only in the gitignored `env/.<target>.env`. The code is
+extracted from the SMS body (labelled code first, then a bare 4-digit run); a code that never
+arrives (carrier/Twilio lag or an OTP cooldown) is a skip, never a failure.
 
 ## Slack alerting
 

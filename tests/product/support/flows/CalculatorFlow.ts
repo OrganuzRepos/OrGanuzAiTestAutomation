@@ -1,7 +1,5 @@
 import { ProductFlows } from '../ProductFlows';
-import { StepTracker } from '../steps/StepTracker';
-import { AddressStep } from '../steps/AddressStep';
-import { PropertyConfirmStep } from '../steps/PropertyConfirmStep';
+import { StepTracker, AddressStep, PropertyConfirmStep } from '../../../../src/pages/product';
 import type { ProductRuntimeIds } from '../ProductAppPage';
 import type { PropertyCharacterizationData } from '../../matrix/e2e-matrix.data';
 
@@ -68,5 +66,21 @@ export class CalculatorFlow {
   async characterizeAsCustomer(scenario: PropertyCharacterizationData): Promise<ProductRuntimeIds> {
     await this.product.loginAs('customer');
     return this.product.characterizeToRoofType(scenario);
+  }
+
+  /** Log in as the customer without driving any wizard step (so a spec can stage the
+   *  wizard stages itself). Idempotent — a resumed/persisted session returns early. */
+  async loginAsCustomer(): Promise<void> {
+    await this.product.loginAs('customer');
+  }
+
+  /**
+   * Post-scan wizard leg (stages 3–4): accept the AI-detected roof boundary (the
+   * area-marking step) and skip obstacle marking (placement-elements), landing on the roof-type step
+   * (…/roof/<id>/type). Returns the runtime ids (projectId + roofId) parsed from the URL.
+   * The roof-type step needs live map drawing, so it is the automation terminus.
+   */
+  async advanceAutoDetectedRoof(): Promise<ProductRuntimeIds> {
+    return this.product.advanceAutoDetectedRoof();
   }
 }

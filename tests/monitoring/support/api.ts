@@ -12,7 +12,7 @@
  */
 import type { APIRequestContext } from '@playwright/test';
 import { parseResponse, type ParsedResponse } from '../../../src/api';
-import { GOVMAP, OFEK, autocompleteBody, orthoTileUrl, labelTileUrl, TILE_HEADERS } from './endpoints';
+import { GOVMAP, autocompleteBody, orthoTileUrl, labelTileUrl, TILE_HEADERS } from './endpoints';
 
 const JSON_HEADERS = { 'content-type': 'application/json' } as const;
 

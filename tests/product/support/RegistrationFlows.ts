@@ -26,8 +26,11 @@ export class RegistrationFlows {
   private readonly flows: ProductFlows;
   readonly app: ProductAppPage;
 
-  constructor(private readonly page: Page) {
-    this.flows = new ProductFlows(page);
+  constructor(
+    private readonly page: Page,
+    flows: ProductFlows,
+  ) {
+    this.flows = flows;
     this.app = this.flows.app;
   }
 

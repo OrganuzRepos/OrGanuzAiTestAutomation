@@ -22,7 +22,7 @@ test.describe('Local-only: Or, agents & projects', { tag: ['@ui', '@local-only']
 
   for (const name of AgentNames) {
     test(`agent card "${name}" is visible`, async ({ home }) => {
-      await expect(home.agents.agent(name)).toBeVisible();
+      await expect(home.agents.agents[name]).toBeVisible();
     });
   }
 

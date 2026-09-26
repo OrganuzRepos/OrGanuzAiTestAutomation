@@ -8,7 +8,15 @@
       "Bash(grep -rhoE \"toBe\\\\\\([0-9]{3}\\\\\\)|toBeLessThan\\\\\\([0-9]{3}\\\\\\)|toBeGreaterThanOrEqual\\\\\\([0-9]{3}\\\\\\)|toBeLessThanOrEqual\\\\\\([0-9]{3}\\\\\\)|toBeGreaterThan\\\\\\([0-9]{3}\\\\\\)|toContain\\\\\\([0-9]{3}\\\\\\)|\\\\[[0-9]{3}\\(, ?[0-9]{3}\\)*\\\\]\" tests/monitoring)",
       "Bash(echo \"exit:$?\")",
       "Bash(QA_TARGET_ENV=dev npx playwright test --project=fraud --reporter=line)",
-      "Bash(echo \"tsc exit:$?\")"
+      "Bash(echo \"tsc exit:$?\")",
+      "Bash(ls /Users/amielpeled/.vscode/extensions/ | grep -iE 'playwright|test-adapter|test-explorer|dotnet|mocha|jest' 2>/dev/null; echo '---npx playwright---'; npx playwright test --list 2>&1 | tail -5)",
+      "Read(//Users/amielpeled/.vscode/extensions/**)",
+      "Bash(which code *)",
+      "Read(//Applications/Visual Studio Code.app/Contents/Resources/app/bin/**)",
+      "Bash(code --list-extensions)",
+      "Bash(pkill -f \"project=organuz-api --project=product --project=agent --project=security --project=local-web\")",
+      "Bash(pkill -f \"cellular-login\")",
+      "Bash(pkill -f \"playwright test\")"
     ]
   }
 }

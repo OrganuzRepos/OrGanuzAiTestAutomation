@@ -18,8 +18,11 @@ import { allureStep } from '../../../src/utils/allure';
 export class ProductFlows {
   readonly app: ProductAppPage;
 
-  constructor(private readonly page: Page) {
-    this.app = new ProductAppPage(page);
+  constructor(
+    private readonly page: Page,
+    app: ProductAppPage,
+  ) {
+    this.app = app;
   }
 
   /** Open the calculator shell, unlocking the dev/test password gate (no-op on prod). */
@@ -93,6 +96,11 @@ export class ProductFlows {
    */
   async characterizeToRoofType(scenario: PropertyCharacterizationData): Promise<ProductRuntimeIds> {
     await this.app.createProject(scenario);
+    return this.advanceAutoDetectedRoof();
+  }
+
+  /** Accept the detected boundary, skip obstacles, and stop at the roof-type step. */
+  async advanceAutoDetectedRoof(): Promise<ProductRuntimeIds> {
     return this.app.advanceAutoDetectedRoof();
   }
 }

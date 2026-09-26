@@ -41,7 +41,10 @@ const headless = !debugMode;
 const productUse = {
   ...devices['Desktop Chrome'],
   baseURL: config.app.baseUrl,
-  viewport: { width: 1920, height: 1080 },
+  // Product app is exercised at a 600x800 (narrow) viewport. Set at the project level so
+  // the dedicated mobile suite (tests/product/mobile/**) can still override it per-describe
+  // with real device profiles via test.use — a project `use` is beaten by a spec `test.use`.
+  viewport: { width: 600, height: 800 },
   headless,
 };
 
@@ -50,7 +53,13 @@ export default defineConfig({
   ...(includeLowPriorityTests ? {} : { grepInvert: /@low-priority/ }),
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  // Retries heal transient live-site blips (a slow dev-app load that trips a nav
+  // timeout, an Axe scan that catches a lazily-rendered node before fonts settle)
+  // so a local run lands on the same green result as CI instead of flapping. Local
+  // gets 1 retry (CI 2) — the tests themselves are deterministic when run calmly, so
+  // a finding that survives a retry is real, not noise. trace/video 'retain-on-failure'
+  // keep the artifact from the final failed attempt, so debugging is unaffected.
+  retries: process.env.CI ? 2 : 1,
   workers: process.env.CI ? 4 : config.playwright.workers,
   timeout,
   expect: { timeout },

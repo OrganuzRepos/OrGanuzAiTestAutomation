@@ -12,7 +12,7 @@
 import { test, expect } from '../support/fixtures';
 import { skipOnOutage } from '../support/envGate';
 import { rolePhone } from '../support/roleCredentials';
-import { LOGIN } from '../support/steps/authControls';
+import { LOGIN } from '../../../src/pages/product';
 import { allureEpic, allureFeature, allureStory, allureSeverity } from '../../../src/utils/allure';
 
 const otpUiEnabled = process.env.PRODUCT_OTP_UI === 'true';
@@ -32,8 +32,8 @@ test.describe('Cellular login (phone + OTP)', { tag: ['@product', '@auth'] }, ()
     await allureSeverity('critical');
     await loginDialog.open();
 
-    await expect(loginDialog.dialog()).toBeVisible();
-    await expect(loginDialog.heading()).toBeVisible();
+    await expect(loginDialog.dialog).toBeVisible();
+    await expect(loginDialog.heading).toBeVisible();
   });
 
   test('The dialog prompts for a mobile number', async ({ loginDialog }) => {
@@ -41,8 +41,8 @@ test.describe('Cellular login (phone + OTP)', { tag: ['@product', '@auth'] }, ()
     await allureSeverity('normal');
     await loginDialog.open();
 
-    await expect(loginDialog.prompt()).toBeVisible();
-    await expect(loginDialog.phoneField()).toBeVisible();
+    await expect(loginDialog.prompt).toBeVisible();
+    await expect(loginDialog.phoneField).toBeVisible();
   });
 
   test('Send-code is disabled before a number is entered', async ({ loginDialog }) => {
@@ -50,7 +50,7 @@ test.describe('Cellular login (phone + OTP)', { tag: ['@product', '@auth'] }, ()
     await allureSeverity('normal');
     await loginDialog.open();
 
-    await expect(loginDialog.sendCodeButton(), 'send-code is gated with no number').toBeDisabled();
+    await expect(loginDialog.sendCodeButton, 'send-code is gated with no number').toBeDisabled();
   });
 
   test('An invalid mobile number keeps send-code disabled', async ({ loginDialog }) => {
@@ -59,7 +59,7 @@ test.describe('Cellular login (phone + OTP)', { tag: ['@product', '@auth'] }, ()
     await loginDialog.open();
     await loginDialog.enterMobileNumber('123');
 
-    await expect(loginDialog.sendCodeButton(), 'a too-short number does not enable send-code').toBeDisabled();
+    await expect(loginDialog.sendCodeButton, 'a too-short number does not enable send-code').toBeDisabled();
   });
 
   test('A valid mobile number enables send-code', async ({ loginDialog }) => {
@@ -68,7 +68,7 @@ test.describe('Cellular login (phone + OTP)', { tag: ['@product', '@auth'] }, ()
     await loginDialog.open();
     await loginDialog.enterMobileNumber(VALID_MOBILE);
 
-    await expect(loginDialog.sendCodeButton(), 'a valid number enables send-code').toBeEnabled();
+    await expect(loginDialog.sendCodeButton, 'a valid number enables send-code').toBeEnabled();
   });
 
   test('The dialog offers property-owner and solar-company registration', async ({ loginDialog }) => {
@@ -76,8 +76,8 @@ test.describe('Cellular login (phone + OTP)', { tag: ['@product', '@auth'] }, ()
     await allureSeverity('normal');
     await loginDialog.open();
 
-    await expect(loginDialog.propertyOwnerRegister()).toBeVisible();
-    await expect(loginDialog.solarCompanyRegister()).toBeVisible();
+    await expect(loginDialog.propertyOwnerRegister).toBeVisible();
+    await expect(loginDialog.solarCompanyRegister).toBeVisible();
   });
 
   test('The dialog can be closed back to the signed-out calculator', async ({ loginDialog }) => {
@@ -86,15 +86,15 @@ test.describe('Cellular login (phone + OTP)', { tag: ['@product', '@auth'] }, ()
     await loginDialog.open();
     await loginDialog.close();
 
-    await expect(loginDialog.dialog()).toBeHidden();
-    await expect(loginDialog.entryButton(), 'the login entry point is available again').toBeVisible();
+    await expect(loginDialog.dialog).toBeHidden();
+    await expect(loginDialog.entryButton, 'the login entry point is available again').toBeVisible();
   });
 
   test('Property-owner registration opens from the dialog', async ({ loginDialog, page }) => {
     await allureStory('Property-owner registration');
     await allureSeverity('normal');
     await loginDialog.open();
-    await loginDialog.propertyOwnerRegister().click();
+    await loginDialog.propertyOwnerRegister.click();
 
     await expect(
       page.getByRole('heading', { name: LOGIN.propertyOwnerRegistrationHeading }),
@@ -112,13 +112,13 @@ test.describe('Cellular login (phone + OTP)', { tag: ['@product', '@auth'] }, ()
     await loginDialog.requestOtp();
 
     try {
-      await loginDialog.otpHeading().waitFor({ state: 'visible', timeout: 20_000 });
+      await loginDialog.otpHeading.waitFor({ state: 'visible', timeout: 20_000 });
     } catch {
       test.skip(true, 'OTP step did not render — dev OTP rate-limit cooldown');
       return;
     }
 
-    await expect(loginDialog.otpBoxes(), 'the OTP step shows four single-digit boxes').toHaveCount(4);
-    await expect(loginDialog.verifyButton()).toBeVisible();
+    await expect(loginDialog.otpBoxes, 'the OTP step shows four single-digit boxes').toHaveCount(4);
+    await expect(loginDialog.verifyButton).toBeVisible();
   });
 });

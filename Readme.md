@@ -6,7 +6,7 @@
 
 🎭 **Playwright**  ·  🟦 **TypeScript**  ·  🟢 **Node.js 22**  ·  🐳 **Docker**  ·  📈 **Grafana**  ·  🔥 **Prometheus**
 
-✅ **187 default tests discovered**  ·  🛡️ **44 security + fraud checks**  ·  ♿ **30 WCAG / Axe checks**
+✅ **191 default tests discovered**  ·  🛡️ **44 security + fraud checks**  ·  ♿ **30 WCAG / Axe checks**
 
 | [🚀&nbsp;Setup](#local-setup) | [▶️&nbsp;Test&nbsp;Suite](#what-npm-test-runs) | [🛡️&nbsp;Security](#run-the-backend-security-pentest-tests) | [🤖&nbsp;QA&nbsp;Agent](#qa-agent) | [📊&nbsp;Dashboard](#grafana-qa-dashboard) | [⚙️&nbsp;CI](#github-actions) | [🔧&nbsp;Config](#configuration) |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -29,7 +29,7 @@ The tests are written with [Playwright](https://playwright.dev/) (a browser-auto
 
 Each part of the system and what it does:
 
-- **Playwright** — runs the actual tests. The active default suite discovers **187 tests**: product calculator checks (`product`), the Organuz backend API contract (`organuz-api`), backend penetration tests (`security`), product fraud/ATO checks (`fraud`), local-only marketing e2e (`local-web`), QA-agent regressions (`agent`), and CI-enabled marketing accessibility checks (`accessibility`). The broader marketing UI checks (`chromium`) and live per-role product flows remain disabled. External-API monitoring is opt-in.
+- **Playwright** — runs the actual tests. The active default suite discovers **191 tests**: product calculator checks (`product`), the Organuz backend API contract (`organuz-api`), backend penetration tests (`security`), product fraud/ATO checks (`fraud`), local-only marketing e2e (`local-web`), QA-agent regressions (`agent`), and CI-enabled marketing accessibility checks (`accessibility`). The broader marketing UI checks (`chromium`) and live per-role product flows remain disabled. External-API monitoring is opt-in.
 - **TypeScript** — the language the tests and framework code are written in.
 - **FastAPI** — a small local web service that exposes health checks and metadata endpoints.
 - **Scalar** — a nice API-reference page for the external OpenAPI docs.
@@ -123,9 +123,9 @@ npm test
 
 `npm test` runs the Playwright projects that are currently **active** in `playwright.config.ts`: `product`, `organuz-api`, `agent`, `security`, `fraud`, `local-web`, and `accessibility`.
 
-The default suite currently discovers **187 tests**:
+The default suite currently discovers **191 tests**:
 
-- `product` discovers 60 tests — public API sanity (8), cellular-login UI (9), English sanity (6), offline matrix/role contracts (23), mobile coverage (6), and wizard/customer-process coverage (8). Live role specs under `flows/**` remain excluded.
+- `product` discovers 64 tests — public API sanity (8), cellular-login UI (10, incl. the opt-in SMS-OTP e2e), English sanity (6), offline matrix/role contracts (24), mobile coverage (6), and wizard/customer-process coverage (10). Live role specs under `flows/**` remain excluded.
 - `organuz-api` runs one `@other-smoke` API contract.
 - `agent` runs two `@other-smoke` tests (the orchestrator regression and the URL-driven test-plan generator).
 - `security` runs 30 authorized, safe-by-default backend penetration checks (`SEC-01…SEC-30`, including the `SEC-21…SEC-30` account-takeover set); two mutating denial probes skip unless a disposable target is explicitly acknowledged.
@@ -185,13 +185,13 @@ npx playwright test --project=local-web
 
 The `local-web` project (`tests/local-web/**`, 50 tests) drives a real chromium context against the prod marketing site `https://www.organuz.ai` — hero/nav, audiences, contact, FAQ, and agents/projects coverage. It is registered by default and runs locally, but **every spec self-skips when `process.env.CI` is set** (via `localOnly()` in `tests/local-web/support.ts`), and the CI matrix does not list the project — an intentional local/CI divergence (a sanctioned skip, per the `test-suite-parity` skill).
 
-### ***Run the product project (60 discovered tests)***
+### ***Run the product project (64 discovered tests)***
 
 ```bash
 npm run test:product
 ```
 
-The `product` project is **active** and targets the calculator app for the selected `QA_TARGET_ENV` (default dev). It currently discovers 60 tests across public API sanity, English UI sanity, cellular login, responsive mobile layouts, calculator wizard/customer-process journeys, and offline matrix/role contracts. The live per-role browser flows live in the disabled `product-setup` / `product-authenticated` projects (re-enable both together to run them).
+The `product` project is **active** and targets the calculator app for the selected `QA_TARGET_ENV` (default dev). It currently discovers 64 tests across public API sanity, English UI sanity, cellular login, responsive mobile layouts, calculator wizard/customer-process journeys, and offline matrix/role contracts. The live per-role browser flows live in the disabled `product-setup` / `product-authenticated` projects (re-enable both together to run them).
 
 The product suite is split into two Playwright projects: the plain `product` project and the role-session `product-authenticated` project.
 
@@ -408,6 +408,19 @@ docker compose up -d allure
 
 Grafana is mapped to host port `3001` because port `3000` is commonly used by local frontend dev servers. Inside Docker Compose, Grafana still listens on `grafana:3000`.
 
+**Port already allocated?** Every host-side port in `docker-compose.yml` is overridable, so this stack can coexist with another local compose project that binds the same port (the documented gotcha is a leftover stack on `8000`, `8080` or `9091`). Set the override in the gitignored root `.env` — Compose substitutes it, and `scripts/run-all-tests.sh` sources the same file so the printed/Slack links follow:
+
+| Variable | Default | Also set |
+| --- | --- | --- |
+| `API_PORT` | `8000` | `API_BASE_URL`, `FASTAPI_URL` |
+| `SCALAR_PORT` | `8080` | `SWAGGER_URL` |
+| `PUSHGATEWAY_PORT` | `9091` | `PUSHGATEWAY_URL` |
+| `PROMETHEUS_PORT` | `9092` | `PROMETHEUS_URL` |
+| `GRAFANA_PORT` | `3001` | `GRAFANA_URL` |
+| `ALLURE_PORT` | `5050` | `ALLURE_URL` |
+
+Container-side ports never change, so `server/prometheus.yml` (`pushgateway:9091`) and the CI workflow keep working on the defaults.
+
 ---
 
 ## ***Grafana QA Dashboard***
@@ -516,17 +529,20 @@ Runtime configuration is read from environment variables, with fallbacks in `con
 | `BROWSER` | Browser project selection |
 | `INCLUDE_LOW_PRIORITY_TESTS` | Include broad marketing suites tagged `@low-priority` |
 | `PRODUCT_OTP_UI` | Enables the one cellular-login check that sends a real dev OTP (`true`); disabled by default |
+| `PRODUCT_SMS_LOGIN` | Enables the SMS-OTP cellular login e2e — a real SMS send + sign-in, reading the code from Twilio (`true`); disabled by default |
+| `TWILIO_ACCOUNT_SID` / `TWILIO_AUTH_TOKEN` / `TWILIO_OTP_NUMBER` | Twilio REST credentials used to read the inbound login SMS, plus the optional receiving number; absent → that spec skips |
 | `PRODUCT_WIZARD_E2E` | Enables authenticated wizard characterization that creates a real dev project (`true`); disabled by default |
 | `FRAUD_AUTH_BACKEND` / `FRAUD_APP_TOKEN` / `FRAUD_OTP_VERIFY_CALL` | Optional fraud-suite endpoint/token/OTP-method overrides |
 | `MONITORING_ENABLED` | Registers the opt-in `monitoring` project (`true` to run the live Govmap/Ofek checks) |
 | `QA_PLAYWRIGHT_RESULTS_PATH` | Path read by `scripts/push-qa-metrics.mjs` for the latest Playwright JSON report; defaults to `test-results/results.json` |
 | `PUSHGATEWAY_URL` | Prometheus Pushgateway the QA metrics are pushed to; defaults to `http://localhost:9091` |
+| `API_PORT` / `SCALAR_PORT` / `PUSHGATEWAY_PORT` / `PROMETHEUS_PORT` / `GRAFANA_PORT` / `ALLURE_PORT` | Host-side port overrides for the local Docker stack (see the service-URL table above); defaults `8000` / `8080` / `9091` / `9092` / `3001` / `5050` |
 
 The Playwright projects `product`, `organuz-api`, `agent`, `security`, `fraud`, `local-web`, and `accessibility` are active by default; `chromium`, `product-setup`, and `product-authenticated` are commented out in `playwright.config.ts` with their specs retained; `monitoring` is opt-in:
 
 | Project | Status | Test files | Target | Typical command |
 | --- | --- | --- | --- | --- |
-| `product` | active | `tests/product/**/*.spec.ts` excluding `flows/**` (60 discovered) | Product calculator: public/API, cellular login, English, matrix, mobile, and wizard coverage | `npx playwright test --project=product` |
+| `product` | active | `tests/product/**/*.spec.ts` excluding `flows/**` (64 discovered) | Product calculator: public/API, cellular login, English, matrix, mobile, and wizard coverage | `npx playwright test --project=product` |
 | `organuz-api` | active | `tests/organuz-api/**/*.spec.ts` filtered to `@other-smoke` (1) | Organuz Supabase/PostgREST backend (`/rest/v1/projects`, edge functions) | `npx playwright test --project=organuz-api` |
 | `agent` | active | `tests/agent/**/*.spec.ts` filtered to `@other-smoke` (2) | QA-agent orchestrator + TestPlanAgent stubs (no network) | `npx playwright test --project=agent` |
 | `security` | active | `tests/security/**/*.spec.ts` (30) | Authorized, safe-by-default pentest of the Organuz Supabase backend (anon key), incl. account-takeover checks | `npx playwright test --project=security` |
@@ -540,7 +556,7 @@ The Playwright projects `product`, `organuz-api`, `agent`, `security`, `fraud`, 
 
 Re-enable a disabled project by uncommenting its block in `playwright.config.ts`.
 
-The default suite discovers **187 tests** (`product` 60 + `organuz-api` 1 + `agent` 2 + `security` 30 + `fraud` 14 + `local-web` 50 + `accessibility` 30), or **237** with `MONITORING_ENABLED=true`. The 50 `local-web` tests run only off CI, so the main CI matrix discovers 137 tests plus the separate non-blocking 50-test monitoring job. Environment- and opt-in-gated cases may report as skipped.
+The default suite discovers **191 tests** (`product` 64 + `organuz-api` 1 + `agent` 2 + `security` 30 + `fraud` 14 + `local-web` 50 + `accessibility` 30), or **241** with `MONITORING_ENABLED=true`. The 50 `local-web` tests run only off CI, so the main CI matrix discovers 141 tests plus the separate non-blocking 50-test monitoring job. Environment- and opt-in-gated cases may report as skipped.
 
 ### ***Environment files***
 
