@@ -94,4 +94,27 @@ export class LoginDialog {
   async requestOtp(): Promise<void> {
     await allureStep('Request verification code', () => this.sendCodeButton.click());
   }
+
+  /** Wait for the OTP step (the four single-digit boxes) to render after a code is sent. */
+  async waitForOtpStep(timeoutMs = 20_000): Promise<void> {
+    await this.otpHeading.waitFor({ state: 'visible', timeout: timeoutMs });
+  }
+
+  /**
+   * Enter the verification code into the per-digit boxes. Fills one digit per box (the
+   * inputs auto-advance focus), so the code length must match the number of boxes.
+   */
+  async enterOtp(code: string): Promise<void> {
+    const digits = code.trim().split('');
+    await allureStep(`Enter ${digits.length}-digit OTP`, async () => {
+      for (let index = 0; index < digits.length; index += 1) {
+        await this.otpBoxes.nth(index).fill(digits[index]);
+      }
+    });
+  }
+
+  /** Submit the entered OTP to complete sign-in ("אישור והתחברות"). */
+  async submitOtp(): Promise<void> {
+    await allureStep('Submit OTP and sign in', () => this.verifyButton.click());
+  }
 }
