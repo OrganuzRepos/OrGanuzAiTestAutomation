@@ -1,3 +1,8 @@
+# Host-side ports are overridable so this stack can coexist with other local
+# compose projects that bind the same ports (Compose reads the gitignored root
+# ./.env for these). Defaults are the documented ones: api 8000, Scalar 8080,
+# Pushgateway 9091, Prometheus 9092, Grafana 3001, Allure 5050. Container-side
+# ports never change, so server/prometheus.yml (pushgateway:9091) still holds.
 services:
   api:
     build:
@@ -5,7 +10,7 @@ services:
       dockerfile: server/Dockerfile
     image: organuz-ai-fastapi-server
     ports:
-      - "8000:8000"
+      - "${API_PORT:-8000}:8000"
     # No test-results bind mount: QA metrics are now pushed to the Pushgateway by
     # the test runner (scripts/push-qa-metrics.mjs), so the api no longer reads the
     # results file (which is what went stale here on macOS after each run).
@@ -19,7 +24,7 @@ services:
   swagger:
     image: nginx:1.27-alpine
     ports:
-      - "8080:80"
+      - "${SCALAR_PORT:-8080}:80"
     depends_on:
       api:
         condition: service_healthy
@@ -29,12 +34,12 @@ services:
   pushgateway:
     image: prom/pushgateway:v1.10.0
     ports:
-      - "9091:9091"
+      - "${PUSHGATEWAY_PORT:-9091}:9091"
 
   prometheus:
     image: prom/prometheus:v2.55.1
     ports:
-      - "9092:9090"
+      - "${PROMETHEUS_PORT:-9092}:9090"
     depends_on:
       api:
         condition: service_healthy
@@ -52,7 +57,7 @@ services:
   grafana:
     image: grafana/grafana:11.3.0
     ports:
-      - "3001:3000"
+      - "${GRAFANA_PORT:-3001}:3000"
     depends_on:
       prometheus:
         condition: service_started
@@ -67,7 +72,7 @@ services:
   allure:
     image: nginx:1.27-alpine
     ports:
-      - "5050:80"
+      - "${ALLURE_PORT:-5050}:80"
     volumes:
       - ./allure-report:/usr/share/nginx/html:ro
       # no-store on index.html so a regenerated report (new content-hashed

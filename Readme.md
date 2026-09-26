@@ -408,6 +408,19 @@ docker compose up -d allure
 
 Grafana is mapped to host port `3001` because port `3000` is commonly used by local frontend dev servers. Inside Docker Compose, Grafana still listens on `grafana:3000`.
 
+**Port already allocated?** Every host-side port in `docker-compose.yml` is overridable, so this stack can coexist with another local compose project that binds the same port (the documented gotcha is a leftover stack on `8000`, `8080` or `9091`). Set the override in the gitignored root `.env` — Compose substitutes it, and `scripts/run-all-tests.sh` sources the same file so the printed/Slack links follow:
+
+| Variable | Default | Also set |
+| --- | --- | --- |
+| `API_PORT` | `8000` | `API_BASE_URL`, `FASTAPI_URL` |
+| `SCALAR_PORT` | `8080` | `SWAGGER_URL` |
+| `PUSHGATEWAY_PORT` | `9091` | `PUSHGATEWAY_URL` |
+| `PROMETHEUS_PORT` | `9092` | `PROMETHEUS_URL` |
+| `GRAFANA_PORT` | `3001` | `GRAFANA_URL` |
+| `ALLURE_PORT` | `5050` | `ALLURE_URL` |
+
+Container-side ports never change, so `server/prometheus.yml` (`pushgateway:9091`) and the CI workflow keep working on the defaults.
+
 ---
 
 ## ***Grafana QA Dashboard***
@@ -521,6 +534,7 @@ Runtime configuration is read from environment variables, with fallbacks in `con
 | `MONITORING_ENABLED` | Registers the opt-in `monitoring` project (`true` to run the live Govmap/Ofek checks) |
 | `QA_PLAYWRIGHT_RESULTS_PATH` | Path read by `scripts/push-qa-metrics.mjs` for the latest Playwright JSON report; defaults to `test-results/results.json` |
 | `PUSHGATEWAY_URL` | Prometheus Pushgateway the QA metrics are pushed to; defaults to `http://localhost:9091` |
+| `API_PORT` / `SCALAR_PORT` / `PUSHGATEWAY_PORT` / `PROMETHEUS_PORT` / `GRAFANA_PORT` / `ALLURE_PORT` | Host-side port overrides for the local Docker stack (see the service-URL table above); defaults `8000` / `8080` / `9091` / `9092` / `3001` / `5050` |
 
 The Playwright projects `product`, `organuz-api`, `agent`, `security`, `fraud`, `local-web`, and `accessibility` are active by default; `chromium`, `product-setup`, and `product-authenticated` are commented out in `playwright.config.ts` with their specs retained; `monitoring` is opt-in:
 
