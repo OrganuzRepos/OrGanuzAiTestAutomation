@@ -7,7 +7,7 @@
  * there is no dev rate-limit risk and they run deterministically whenever the dev app is up
  * (skipOnOutage turns a genuine outage into a skip). No geocode is involved, so unlike the
  * wizard specs these are CI-safe. The single check that must request a code (the OTP step)
- * is opt-in behind PRODUCT_OTP_UI=true and self-skips on the dev OTP cooldown.
+ * is opt-in behind PRODUCT_OTP_UI=true; a missing OTP step fails without retries.
  */
 import { test, expect } from '../support/fixtures';
 import { skipOnOutage } from '../support/envGate';
@@ -101,24 +101,22 @@ test.describe('Cellular login (phone + OTP)', { tag: ['@product', '@auth'] }, ()
     ).toBeVisible();
   });
 
-  // Opt-in: this one REQUESTS a code (a real dev OTP send), so it is gated + skip-safe.
-  test('Requesting a code reveals the 4-digit OTP entry step', async ({ loginDialog }) => {
-    test.skip(!otpUiEnabled, 'PRODUCT_OTP_UI not set — avoids triggering a real dev OTP send');
-    await allureStory('OTP entry step');
-    await allureSeverity('critical');
+  // Opt-in: one real OTP request, with no automatic retries.
+  test.describe('Live OTP entry', () => {
+    test.describe.configure({ retries: 0 });
+    test('Requesting a code reveals the 4-digit OTP entry step', async ({ loginDialog }) => {
+      test.skip(!otpUiEnabled, 'PRODUCT_OTP_UI not set — avoids triggering a real dev OTP send');
+      await allureStory('OTP entry step');
+      await allureSeverity('critical');
 
-    await loginDialog.open();
-    await loginDialog.enterMobileNumber(rolePhone('customer') ?? VALID_MOBILE);
-    await loginDialog.requestOtp();
+      await loginDialog.open();
+      await loginDialog.enterMobileNumber(rolePhone('customer') ?? VALID_MOBILE);
+      await loginDialog.requestOtp();
 
-    try {
-      await loginDialog.otpHeading.waitFor({ state: 'visible', timeout: 20_000 });
-    } catch {
-      test.skip(true, 'OTP step did not render — dev OTP rate-limit cooldown');
-      return;
-    }
+      await expect(loginDialog.otpHeading, 'OTP entry appears after one send').toBeVisible({ timeout: 20_000 });
 
-    await expect(loginDialog.otpBoxes, 'the OTP step shows four single-digit boxes').toHaveCount(4);
-    await expect(loginDialog.verifyButton).toBeVisible();
+      await expect(loginDialog.otpBoxes, 'the OTP step shows four single-digit boxes').toHaveCount(4);
+      await expect(loginDialog.verifyButton).toBeVisible();
+    });
   });
 });

@@ -49,16 +49,11 @@ export class ProductAuthPage {
       throw new Error('Product login requires either phone credentials or email/password credentials.');
     }
 
-    await this.actions.clickFirstVisible([
-      this.page.getByTestId('login-submit'),
-      this.page.getByRole('button', { name: /log in|sign in|login|כניסה|התחברות/i }),
-      this.page.getByRole('button', { name: /continue|המשך/i }),
-    ]).catch(() => undefined);
     await this.page.waitForLoadState('domcontentloaded');
 
     if (credentials.phone && !(await this.session.waitForPersistedToken(8_000))) {
       throw new OtpUnavailableError(
-        `Login did not authenticate ${credentials.phone} — likely dev OTP rate-limit cooldown.`,
+        'OTP verification did not persist a session token; the cause is unconfirmed.',
       );
     }
     return this.runtimeIds.capture();
@@ -125,17 +120,10 @@ export class ProductAuthPage {
     try {
       await otpHeading.waitFor({ state: 'visible', timeout: 12_000 });
     } catch {
-      await this.actions.clickFirstVisible([
-        this.page.getByRole('button', { name: /שלחו שנית|resend|send.*again/i }),
-        sendCode,
-      ]).catch(() => undefined);
-      try {
-        await otpHeading.waitFor({ state: 'visible', timeout: 15_000 });
-      } catch {
-        throw new OtpUnavailableError(
-          `OTP step never rendered for ${phone} — dev OTP rate-limit cooldown.`,
-        );
-      }
+      throw new OtpUnavailableError(
+        'OTP entry did not appear after one send attempt; no resend was attempted. '
+        + 'The cause is unconfirmed (gateway failure, throttling, or a UI defect).',
+      );
     }
 
     if (otpCode) {
