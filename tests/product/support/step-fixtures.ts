@@ -1,5 +1,11 @@
 import { TestType, Fixtures, PlaywrightTestArgs } from '@playwright/test';
-import { StepTracker, AddressStep, PropertyConfirmStep } from '../../../src/pages/product';
+import {
+  StepTracker,
+  AddressStep,
+  PropertyConfirmStep,
+  RoofTypeStep,
+  MyOffersPage,
+} from '../../../src/pages/product';
 
 /**
  * Calculator step-page-object fixtures library.
@@ -18,6 +24,10 @@ export interface CalculatorStepFixtures {
   addressStep: AddressStep;
   /** Step 2 — auto-located property confirmation + the auth boundary. */
   propertyConfirm: PropertyConfirmStep;
+  /** Roof-type step (…/roof/<id>/type) — the wizard's automation terminus + its guard. */
+  roofTypeStep: RoofTypeStep;
+  /** Signed-in personal area offers list (…/pricing/my-offers). */
+  myOffers: MyOffersPage;
 }
 
 const stepFixtureImpl: Fixtures<CalculatorStepFixtures, object, PlaywrightTestArgs, object> = {
@@ -30,11 +40,18 @@ const stepFixtureImpl: Fixtures<CalculatorStepFixtures, object, PlaywrightTestAr
   propertyConfirm: async ({ page }, use) => {
     await use(new PropertyConfirmStep(page));
   },
+  roofTypeStep: async ({ page }, use) => {
+    await use(new RoofTypeStep(page));
+  },
+  myOffers: async ({ page }, use) => {
+    await use(new MyOffersPage(page));
+  },
 };
 
 /**
  * Extend a product base test with the calculator step page objects. Returns a new test
- * object with `stepTracker` / `addressStep` / `propertyConfirm` available. The cast
+ * object with `stepTracker` / `addressStep` / `propertyConfirm` / `roofTypeStep` /
+ * `myOffers` available. The cast
  * bridges the concrete fixture deps (Playwright's built-in `page`) to the caller's
  * generic base-test args.
  */

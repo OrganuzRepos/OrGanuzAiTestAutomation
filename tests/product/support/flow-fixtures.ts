@@ -28,8 +28,20 @@ const flowFixtureImpl: Fixtures<
   CalculatorFlowDeps & PlaywrightTestArgs,
   object
 > = {
-  calculatorFlow: async ({ product, stepTracker, addressStep, propertyConfirm }, use) => {
-    await use(new CalculatorFlow(product, stepTracker, addressStep, propertyConfirm));
+  calculatorFlow: async (
+    { product, stepTracker, addressStep, propertyConfirm, roofTypeStep, myOffers },
+    use,
+  ) => {
+    await use(
+      new CalculatorFlow(
+        product,
+        stepTracker,
+        addressStep,
+        propertyConfirm,
+        roofTypeStep,
+        myOffers,
+      ),
+    );
   },
 };
 

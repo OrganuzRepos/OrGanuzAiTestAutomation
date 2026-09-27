@@ -30,7 +30,7 @@
     "@axe-core/playwright": "^4.12.1",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@playwright/mcp": "^0.0.78",
-    "@playwright/test": "^1.60.0",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^20.12.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
@@ -43,11 +43,12 @@
     "mammoth": "^1.12.0",
     "marked": "^4.3.0",
     "pdf-parse": "^2.4.5",
+    "playwright-core": "^1.63.0",
     "typescript": "^5.4.5",
     "wait-on": "^7.2.0",
     "xlsx": "^0.18.5"
   },
   "dependencies": {
-    "playwright": "^1.60.0"
+    "playwright": "^1.63.0"
   }
 }

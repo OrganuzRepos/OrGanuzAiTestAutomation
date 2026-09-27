@@ -12,18 +12,19 @@ description: Keep the Playwright suite identical locally and on GitHub Actions �
 
 The matrix `project:` list MUST equal the *invokable* project names in `playwright.config.ts`. CI shards by project; locally they all run in one invocation. Same projects ⇒ same tests. (`product-setup` is the exception: it is a setup dependency of `product-authenticated`, not a standalone shard — running `--project=product-authenticated` pulls it in, so the matrix names `product-authenticated` and not `product-setup`.)
 
-## Current suite (150 active tests; `chromium` + the role projects are DISABLED)
+## Current suite (196 active tests; `chromium` + the role projects are DISABLED)
 
-> **State:** a plain `npx playwright test` runs **150 tests** — `product` 37 + `local-web` 50 + `accessibility` 30 + `security` 30 + `agent` 2 + `organuz-api` 1. With `MONITORING_ENABLED=true` the opt-in `monitoring` project adds 50, for **200** total.
+> **State:** a plain `npx playwright test` runs **196 tests** — `product` 69 + `local-web` 50 + `accessibility` 30 + `security` 30 + `fraud` 14 + `agent` 2 + `organuz-api` 1. With `MONITORING_ENABLED=true` the opt-in `monitoring` project adds 50, for **246** total.
 >
-> **Parity — one deliberate divergence.** `.github/workflows/parallel-tests.yml` has `strategy.matrix.project` = `organuz-api, agent, security, product, accessibility` (the `chromium` / `product-authenticated` entries are commented out, matching the disabled config). `local-web` is **intentionally not** a CI shard: every `local-web` spec self-skips when `process.env.CI` is set, so it runs locally only.
+> **Parity — one deliberate divergence.** `.github/workflows/parallel-tests.yml` has `strategy.matrix.project` = `organuz-api, agent, security, fraud, product, accessibility` (the `chromium` / `product-authenticated` entries are commented out, matching the disabled config). `local-web` is **intentionally not** a CI shard: every `local-web` spec self-skips when `process.env.CI` is set, so it runs locally only.
 
 | Project | testMatch | Default filter | Tests | Status / needs |
 |---|---|---|---|---|
-| `product` | `tests/product/**` (ignore `flows/**`) | — (all) | 37 | **active** — product calculator (`*.organuz.com`), env via `QA_TARGET_ENV`; token-sanity opens the live dev app (skips on outage) |
+| `product` | `tests/product/**` (ignore `flows/**`) | — (all) | 69 | **active** — product calculator (`*.organuz.com`), env via `QA_TARGET_ENV`; token-sanity opens the live dev app (skips on outage); the wizard + `journeys/**` groups are local-only + opt-in (see the sanctioned skips) |
 | `local-web` | `tests/local-web/**` | — | 50 | **active locally only** — real Chromium vs prod `www.organuz.ai`; every spec self-skips when `CI` is set; **not** a CI matrix shard |
 | `accessibility` | `tests/accessibility/**` | — | 30 | **active** — marketing accessibility checks; local + CI; Chromium required |
 | `security` | `tests/security/**` | — | 30 | **active** — safe-by-default backend penetration testing; in the CI matrix |
+| `fraud` | `tests/fraud/**` | — | 14 | **active** — non-destructive product fraud / ATO checks, env via `QA_TARGET_ENV`; in the CI matrix (see the organuz-fraud-detection skill) |
 | `agent` | `tests/agent/**` | `@other-smoke` | 2 | **active** — pure stubs: orchestrator run-loop + `TestPlanAgent` |
 | `organuz-api` | `tests/organuz-api/**` | `@other-smoke` | 1 | **active** — Supabase anon key baked in `config.json` |
 | `monitoring` *(opt-in, not in the count)* | `tests/monitoring/**` | — | 50 | **only when `MONITORING_ENABLED=true`**; live Govmap + Ofek. **Skips** (not fails) on an HTML block/challenge page via `tests/monitoring/support/availability.ts`; a real break still fails. Non-blocking `monitoring` job in `parallel-tests.yml` (`continue-on-error`) — never a matrix shard |
@@ -33,7 +34,7 @@ The matrix `project:` list MUST equal the *invokable* project names in `playwrig
 
 `agent` / `organuz-api` run only their `@other-smoke`-tagged tests by default; `product` / `security` / `local-web` have no grep and run everything matched. Parenthesised counts are what each disabled project runs **when re-enabled**.
 
-**Sanctioned skips** (never failures): (1) `token-sanity` skips when the live dev gateway is down and no UI token can be extracted (a malformed-but-observed token still fails); (2) every `local-web` spec skips under CI (local-only by design); (3) when re-enabled, the live per-role specs (`product-setup` 3 + `product-authenticated` 10) skip without per-role credentials. Everything else must pass.
+**Sanctioned skips** (never failures): (1) `token-sanity` skips when the live dev gateway is down and no UI token can be extracted (a malformed-but-observed token still fails); (2) every `local-web` spec skips under CI (local-only by design); (3) when re-enabled, the live per-role specs (`product-setup` 3 + `product-authenticated` 10) skip without per-role credentials; (4) the geocode-driving wizard checks (`tests/product/wizard/**`) and **all 5 full customer journeys** (`tests/product/journeys/**`) are local-only via `skipGeocodeDrivingOnCi()` and opt-in behind `PRODUCT_WIZARD_E2E=true` — they log a customer in and create a real dev project — and self-skip on a dev outage / OTP cooldown; (5) the SMS-OTP cellular login spec is opt-in behind `PRODUCT_SMS_LOGIN=true`. Everything else must pass.
 
 ## The rule when you change the suite
 
