@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 import type {
   ProductPersona,
   PropertyCharacterizationData,
@@ -41,12 +41,29 @@ export class ProductResultsPage {
   }
 
   async openQuotationsFromResults(): Promise<void> {
-    await this.actions.clickFirstVisible([
+    await this.actions.clickFirstVisible(this.quotationsAffordances());
+    await expect(this.page).toHaveURL(/quotation|quote|הצעות/i);
+  }
+
+  /**
+   * Live negative check for personas whose contract says `canOpenQuotationsFromResults:
+   * false` (e.g. "company"): asserts the results page renders NONE of the affordances
+   * `openQuotationsFromResults` would otherwise click — not just that clicking one fails.
+   */
+  async expectQuotationsUnavailable(): Promise<void> {
+    for (const affordance of this.quotationsAffordances()) {
+      await expect(affordance, 'no quotations-from-results affordance is rendered for this persona')
+        .toHaveCount(0);
+    }
+  }
+
+  /** The candidate controls that continue from results into the quotations list. */
+  private quotationsAffordances(): Locator[] {
+    return [
       this.page.getByTestId('continue-to-quotations'),
       this.page.getByRole('link', { name: /quotation|quote|הצעות|הצעת מחיר/i }),
       this.page.getByRole('button', { name: /quotation|quote|הצעות|הצעת מחיר/i }),
-    ]);
-    await expect(this.page).toHaveURL(/quotation|quote|הצעות/i);
+    ];
   }
 
   async downloadOwnQuotation(): Promise<void> {

@@ -5,7 +5,7 @@ description: Drive or debug the Organuz product calculator (energy/dev app) end-
 
 # Organuz product app E2E
 
-> **State:** the **`product` project is ENABLED** (69 discovered tests). The two
+> **State:** the **`product` project is ENABLED** (79 discovered tests). The two
 > credential-gated role projects (`product-setup` / `product-authenticated`) are still
 > commented out in `playwright.config.ts` — see the organuz-product-roles skill.
 
@@ -29,7 +29,7 @@ Flow (all Hebrew accessible names):
 ## Calculator wizard (the "characterization" flow)
 A 7-step tracker (`list "התקדמות השלבים"`). Heavy lifting is done by AI agents (Solara maps the roof, Kelvin analyses it) — most steps just need the primary **continue button `בוא נמשיך`**. Steps confirmed via the Playwright MCP:
 
-1. **`/calculator/address` — איתור הנכס:** pick a property-type button (`בית פרטי` / `בניין מגורים` / `מבנה מסחרי` / `מבנה חקלאי` / `מבנה ציבורי`); type a Hebrew address into the `combobox` and pick from the `listbox` options (English addresses match loosely — prefer Hebrew, e.g. `הברזל 32 תל אביב`). Then `בוא נמשיך` (disabled until type+address chosen).
+1. **`/calculator/address` — איתור הנכס:** pick a property-type button (`בית פרטי` / `בניין מגורים` / `מבנה מסחרי` / `מבנה חקלאי` / `מבנה ציבורי`); type a Hebrew address into the `combobox` and pick from the `listbox` options (English addresses match loosely — prefer Hebrew, e.g. `הברזל 32 תל אביב`). Then `בוא נמשיך` (disabled until type+address chosen). Step 1 also has a **second tab** — a `tablist` with `חפש לפי כתובת` (address, the default) and `חיפוש לפי גוש/חלקה` (block/parcel): the way a professional identifies a property without a street address. That tab shows `textbox "גוש"` (block) + `textbox "חלקה"` (parcel) + `button "מצא"` ("find", starts disabled) INSTEAD of the address combobox — mutually exclusive, confirmed live (prod). **Two confirmed live defects** (covered by `contractor-wizard-e2e.spec.ts`, expected RED until fixed): `מצא` enables with `גוש` alone and `חלקה` empty (a block without a parcel does not identify a property), and clicking it in that state silently clears `גוש` and re-disables the button with no error/toast/validation text. Also observed, not asserted: the property-type buttons expose no selected state to the accessibility tree (no `aria-pressed`, no `[selected]`).
 2. **`/calculator/address/get-address`:** confirmation `מצאנו את הנכס המבוקש!`; the pin is auto-placed. Click `זהו הנכס המבוקש, אפשר להמשיך` → shows `טוען...` while the satellite roof scan runs (~10–20s), then redirects to `/calculator/roof/<roofId>/marking`. **The `<roofId>` in the URL is a runtime id** (capture it).
 3. **`/roof/<id>/marking` — סימון השטח:** AI auto-detects the roof boundary (`הבינה המלאכותית זיהתה את גבול הגג שלך אוטומטית`). Just `בוא נמשיך`.
 4. **`/roof/<id>/placement-elements`:** mark roof obstacles (water heaters/AC/chimneys) — optional; `בוא נמשיך` to skip.
@@ -79,6 +79,9 @@ resume it and deep-link to journey 1's project; journey 5 takes a clean context 
 One OTP send per run instead of five.
 
 `ProductFlows` wraps `ProductAppPage` (the low-level step methods). Add new named flows there, not in specs. Keep test-lifecycle logic out of `ProductAppPage`: `login()` throws `OtpUnavailableError` on an OTP rate-limit, and `ProductFlows` (not the page object) turns it into a graceful `test.skip`.
+
+## Contractor/company wizard coverage (`contractor-wizard-e2e.spec.ts`)
+The only spec that drives the `company` persona through the wizard (every other wizard/journey spec drives `customer`) and the only one touching the block/parcel tab above. Group A (6 deterministic checks, no login) needs only `skipOnOutage` around the open; Group B (4 live checks) follows the exact `company-role-e2e.spec.ts` pattern — `test.use({ authRole: 'company' })`, `resumeOrSkip(product, 'company')`, `skipGeocodeDrivingOnCi()`, opt-in `PRODUCT_WIZARD_E2E`, `skipOnOutage` around the wizard-driving actions. Two of its live checks (post-funding destination → results, and the quotations-from-results negative check) are the FIRST spec to call `ProductAppPage.characterizeRoof/answerFunding/expectPostFundingDestination/openQuotationsFromResults` — those methods were already wired but unused before this file, so their selectors (testId guesses + broad text/role fallbacks) are best-effort, not confirmed live the way step 1's selectors are.
 
 ## Roles, sessions & personal areas
 Per-role authentication, the `product-setup` storageState reuse, `resumeSession`, the role

@@ -5,22 +5,22 @@ description: Keep the Playwright suite identical locally and on GitHub Actions �
 
 # Local ⇄ GitHub Actions test parity
 
-**Invariant:** a plain `npx playwright test` locally runs the *same* set of tests that GitHub Actions runs, and both must be all-green (no failures, no skips, no "did not run"). The two sources of truth are:
+**Invariant:** a plain `npx playwright test` locally runs the *same* set of tests that GitHub Actions runs, and both must be all-green (no failures, no skips, no "did not run") — **except the 2 deliberately-RED tests documented below**, which are the one sanctioned exception to "no failures" (as opposed to the sanctioned skips, which are exceptions to "no skips"). The two sources of truth are:
 
 1. `playwright.config.ts` — the `projects[]` (each with its `testMatch` + default `grep`).
 2. `.github/workflows/parallel-tests.yml` — the `tests` job `strategy.matrix.project`.
 
 The matrix `project:` list MUST equal the *invokable* project names in `playwright.config.ts`. CI shards by project; locally they all run in one invocation. Same projects ⇒ same tests. (`product-setup` is the exception: it is a setup dependency of `product-authenticated`, not a standalone shard — running `--project=product-authenticated` pulls it in, so the matrix names `product-authenticated` and not `product-setup`.)
 
-## Current suite (196 active tests; `chromium` + the role projects are DISABLED)
+## Current suite (206 active tests; `chromium` + the role projects are DISABLED)
 
-> **State:** a plain `npx playwright test` runs **196 tests** — `product` 69 + `local-web` 50 + `accessibility` 30 + `security` 30 + `fraud` 14 + `agent` 2 + `organuz-api` 1. With `MONITORING_ENABLED=true` the opt-in `monitoring` project adds 50, for **246** total.
+> **State:** a plain `npx playwright test` runs **206 tests** — `product` 79 + `local-web` 50 + `accessibility` 30 + `security` 30 + `fraud` 14 + `agent` 2 + `organuz-api` 1. With `MONITORING_ENABLED=true` the opt-in `monitoring` project adds 50, for **256** total.
 >
 > **Parity — one deliberate divergence.** `.github/workflows/parallel-tests.yml` has `strategy.matrix.project` = `organuz-api, agent, security, fraud, product, accessibility` (the `chromium` / `product-authenticated` entries are commented out, matching the disabled config). `local-web` is **intentionally not** a CI shard: every `local-web` spec self-skips when `process.env.CI` is set, so it runs locally only.
 
 | Project | testMatch | Default filter | Tests | Status / needs |
 |---|---|---|---|---|
-| `product` | `tests/product/**` (ignore `flows/**`) | — (all) | 69 | **active** — product calculator (`*.organuz.com`), env via `QA_TARGET_ENV`; token-sanity opens the live dev app (skips on outage); the wizard + `journeys/**` groups are local-only + opt-in (see the sanctioned skips) |
+| `product` | `tests/product/**` (ignore `flows/**`) | — (all) | 79 | **active** — product calculator (`*.organuz.com`), env via `QA_TARGET_ENV`; token-sanity opens the live dev app (skips on outage); the wizard + `journeys/**` groups are local-only + opt-in (see the sanctioned skips); `contractor-wizard-e2e.spec.ts` (10 of the 79) additionally carries 2 permanently-expected-RED tests against a confirmed live block/parcel defect |
 | `local-web` | `tests/local-web/**` | — | 50 | **active locally only** — real Chromium vs prod `www.organuz.ai`; every spec self-skips when `CI` is set; **not** a CI matrix shard |
 | `accessibility` | `tests/accessibility/**` | — | 30 | **active** — marketing accessibility checks; local + CI; Chromium required |
 | `security` | `tests/security/**` | — | 30 | **active** — safe-by-default backend penetration testing; in the CI matrix |
@@ -34,7 +34,9 @@ The matrix `project:` list MUST equal the *invokable* project names in `playwrig
 
 `agent` / `organuz-api` run only their `@other-smoke`-tagged tests by default; `product` / `security` / `local-web` have no grep and run everything matched. Parenthesised counts are what each disabled project runs **when re-enabled**.
 
-**Sanctioned skips** (never failures): (1) `token-sanity` skips when the live dev gateway is down and no UI token can be extracted (a malformed-but-observed token still fails); (2) every `local-web` spec skips under CI (local-only by design); (3) when re-enabled, the live per-role specs (`product-setup` 3 + `product-authenticated` 10) skip without per-role credentials; (4) the geocode-driving wizard checks (`tests/product/wizard/**`) and **all 5 full customer journeys** (`tests/product/journeys/**`) are local-only via `skipGeocodeDrivingOnCi()` and opt-in behind `PRODUCT_WIZARD_E2E=true` — they log a customer in and create a real dev project — and self-skip on a dev outage / OTP cooldown; (5) the SMS-OTP cellular login spec is opt-in behind `PRODUCT_SMS_LOGIN=true`. Everything else must pass.
+**Sanctioned skips** (never failures): (1) `token-sanity` skips when the live dev gateway is down and no UI token can be extracted (a malformed-but-observed token still fails); (2) every `local-web` spec skips under CI (local-only by design); (3) when re-enabled, the live per-role specs (`product-setup` 3 + `product-authenticated` 10) skip without per-role credentials; (4) the geocode-driving wizard checks (`tests/product/wizard/**`, including `contractor-wizard-e2e.spec.ts`'s Group B) and **all 5 full customer journeys** (`tests/product/journeys/**`) are local-only via `skipGeocodeDrivingOnCi()` and opt-in behind `PRODUCT_WIZARD_E2E=true` — they log a customer/company in and create a real dev project — and self-skip on a dev outage / OTP cooldown (`resumeOrSkip`/`skipOnOutage`); (5) the SMS-OTP cellular login spec is opt-in behind `PRODUCT_SMS_LOGIN=true`. Everything else must pass.
+
+**Sanctioned RED** (the one exception to "no failures", never a skip): `contractor-wizard-e2e.spec.ts` has **2 deterministic Group A tests that are permanently expected to FAIL**, deliberately and agreed with the team — they assert the CORRECT gating/validation behaviour for the step-1 block/parcel ("גוש/חלקה") tab against a confirmed-live product defect (today `מצא` enables with the block alone and then silently clears it on submit, with no error/validation text). They run unconditionally (no outage/CI gate skips them) and are expected to stay RED until the product is fixed — see that spec's file-header comment and the organuz-product-e2e skill for the live confirmation. Do not "fix" these by loosening the assertions or adding a `test.skip`; either the product is fixed (and they turn green) or they are deliberately left red.
 
 ## The rule when you change the suite
 

@@ -128,6 +128,10 @@ export class ProductAppPage {
     await this.results.openQuotationsFromResults();
   }
 
+  async expectQuotationsUnavailable(): Promise<void> {
+    await this.results.expectQuotationsUnavailable();
+  }
+
   async downloadOwnQuotation(): Promise<void> {
     await this.results.downloadOwnQuotation();
   }
