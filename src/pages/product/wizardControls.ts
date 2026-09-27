@@ -35,22 +35,30 @@ export const WIZARD = {
   /**
    * The block/parcel tab's own submit button ("find"). Starts disabled.
    *
-   * CONFIRMED DEFECT (live, prod, 2026-09-27): it enables with ONLY "גוש" (block) filled
-   * and "חלקה" (parcel) EMPTY — a block without a parcel does not identify a property.
-   * See the contractor-wizard-e2e spec's expected-RED gating check.
+   * KNOWN GAP (live on prod 2026-09-27 and dev 2026-09-28): it enables with ONLY "גוש"
+   * (block) filled and "חלקה" (parcel) EMPTY — a block without a parcel does not identify
+   * a property. The contractor-wizard-e2e gating check pins this and carries a
+   * `known-gap` annotation naming the correct behaviour.
    */
   findBlockParcel: 'מצא',
   /**
    * Validation message expected once submitting a lone block (no parcel) is rejected. NOT
    * YET IMPLEMENTED as of this writing.
    *
-   * CONFIRMED DEFECT (live, prod, 2026-09-27): today the app shows no error, no toast, and
-   * no validation text at all — it silently clears "גוש" and returns "מצא" to disabled.
+   * KNOWN GAP (live on prod 2026-09-27 and dev 2026-09-28): the app shows no error, no
+   * toast and no validation text at all — it silently clears "גוש" and returns "מצא" to
+   * disabled. Note this only happens once the map is interactive; submitting earlier is
+   * dropped entirely (see AddressStep.waitForMapReady).
    * The pattern below is what the FIXED behaviour should surface (an ARIA alert/status
    * role, or else generic Hebrew "field required" phrasing) — it is not pinned to any
    * copy the product has actually written, because none exists yet.
    */
   blockParcelValidationMessage: /חובה למלא חלקה|יש להזין חלקה|שדה חובה|נא למלא/,
+  /**
+   * The embedded map iframe (Israel Mapping Center / govmap). Matched by src because it
+   * carries no accessible name. Used as a readiness signal — see AddressStep.mapControl.
+   */
+  mapFrame: 'iframe[src*="govmap"], iframe[src*="/iframe/"]',
   /** The "we found the requested property" confirmation banner text. */
   propertyFoundBanner: 'מצאנו את הנכס המבוקש',
   /**

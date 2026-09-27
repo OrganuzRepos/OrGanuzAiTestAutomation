@@ -36,6 +36,13 @@ export class AddressStep {
   /** The validation message the FIXED behaviour should show for a lone block — not yet
    *  rendered by the product; see WIZARD.blockParcelValidationMessage. */
   readonly blockParcelValidation: Locator;
+  /**
+   * A control inside the embedded map. Used purely as a READINESS signal: the block/parcel
+   * lookup is a map operation, and until the map bridge is live "מצא" is inert — it is
+   * enabled and clickable, but clicking does nothing at all. Measured on dev: the step's
+   * fields render ~800ms before this, and a submit in that window is silently dropped.
+   */
+  private readonly mapControl: Locator;
 
   constructor(page: Page) {
     this.continueButton = page.getByRole('button', { name: WIZARD.continue }).last();
@@ -51,6 +58,9 @@ export class AddressStep {
     this.findBlockParcelButton = page.getByRole('button', { name: WIZARD.findBlockParcel });
     this.blockParcelValidation = page.getByRole('alert')
       .or(page.getByText(WIZARD.blockParcelValidationMessage));
+    // .first() on the frame itself: other steps embed a second (roof editor) iframe, and a
+    // bare frameLocator would be a strict-mode violation there.
+    this.mapControl = page.locator(WIZARD.mapFrame).first().contentFrame().getByRole('button').first();
   }
 
   async selectPropertyType(type: PropertyType): Promise<void> {
@@ -83,6 +93,24 @@ export class AddressStep {
   async switchToBlockParcelTab(): Promise<void> {
     await allureStep('Switch to the block/parcel tab', () => this.blockParcelTab.click());
     await this.blockField.waitFor({ state: 'visible', timeout: 15_000 });
+    await this.parcelField.waitFor({ state: 'visible', timeout: 15_000 });
+  }
+
+  /**
+   * Wait until the embedded map is interactive, which is what makes "מצא" actually do
+   * something. The fields are not a sufficient signal: the button renders ENABLED while
+   * the map bridge is still starting, and a submit in that window is silently dropped —
+   * no lookup, no clear, nothing — so a test that acts immediately observes neither the
+   * lookup nor the clear-on-submit behaviour. A condition, not a sleep (measured ~800ms
+   * on dev).
+   *
+   * Only the checks that SUBMIT need this. It depends on the live govmap iframe, which is
+   * geo-blocked for CI runners, so callers pair it with skipGeocodeDrivingOnCi() — the
+   * checks that merely inspect the tab's controls stay CI-safe by not calling it.
+   */
+  async waitForMapReady(): Promise<void> {
+    await allureStep('Wait for the map to become interactive', () =>
+      this.mapControl.waitFor({ state: 'visible', timeout: 30_000 }));
   }
 
   /** Switch back to the address ("כתובת") tab — swaps out the block/parcel fields. */
