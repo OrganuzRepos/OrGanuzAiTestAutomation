@@ -39,17 +39,18 @@ test.describe('Anti-fraud controls (Organuz product app)', { tag: ['@fraud', '@a
     expect(res.text, 'the raw <script> payload must not be reflected into the document').not.toContain(payload);
   });
 
-  test('FRAUD-02 any session/auth cookie is set with Secure + HttpOnly (theft resistance)', async ({ request }) => {
+  test('FRAUD-02 any session/auth cookie is set with Secure + HttpOnly (theft resistance)', async ({ request }, testInfo) => {
     await allureStory('cookie hygiene');
     await allureSeverity('normal');
     const res = await new FraudApi(request).appDocument();
-    const setCookies = res.headersArray.filter((h) => h.name === 'set-cookie');
+    const setCookies = res.headersArray.filter((h) => h.name.toLowerCase() === 'set-cookie');
     // The SPA may set no cookies on the initial document — nothing to protect, nothing to fail.
-    test.skip(setCookies.length === 0, 'app origin sets no cookies on the initial document');
+    expect(res.status, 'cookie policy must be checked on a successful document response').toBe(HttpStatus.OK);
+    testInfo.annotations.push({ type: 'cookie-count', description: String(setCookies.length) });
     for (const { value } of setCookies) {
       const name = value.split('=')[0].trim();
-      expect(value.toLowerCase(), `cookie "${name}" must be Secure`).toContain('secure');
-      expect(value.toLowerCase(), `cookie "${name}" must be HttpOnly`).toContain('httponly');
+      expect(value.toLowerCase(), `cookie "${name}" must be Secure`).toMatch(/;\s*secure(?:;|$)/i);
+      expect(value.toLowerCase(), `cookie "${name}" must be HttpOnly`).toMatch(/;\s*httponly(?:;|$)/i);
     }
   });
 

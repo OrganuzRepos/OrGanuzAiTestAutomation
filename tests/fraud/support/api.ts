@@ -83,7 +83,12 @@ export class FraudApi {
 
   /** Verify an OTP for a (fabricated) phone. Never sends an OTP — verify path only. */
   async authOtpVerify(phone: string, code: string): Promise<ParsedResponse> {
-    return this.authRpc(OTP_VERIFY_CALL, { phone, code });
+    if (!code.trim()) throw new Error('OTP verification requires a non-empty code; refusing an SMS send.');
+    return this.authRpc(OTP_VERIFY_CALL, {
+      sms_phone: phone.replace(/\D/g, ''),
+      sms_code: code,
+      regulations_approval: 'YN_ANSWER_NO',
+    });
   }
 
   /** POST a raw (malformed) body to the auth backend — error-hygiene probe. */
