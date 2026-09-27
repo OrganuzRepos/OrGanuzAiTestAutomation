@@ -5,9 +5,16 @@ function browserHasPersistedToken(): boolean {
   try {
     const browserGlobal = globalThis as unknown as {
       localStorage: { getItem(key: string): string | null };
+      sessionStorage: { getItem(key: string): string | null };
     };
-    const raw = browserGlobal.localStorage.getItem('user');
-    return Boolean(raw && JSON.parse(raw)?.data?.token);
+    return [browserGlobal.sessionStorage, browserGlobal.localStorage].some((storage) => {
+      try {
+        const raw = storage.getItem('user');
+        return Boolean(raw && JSON.parse(raw)?.data?.token);
+      } catch {
+        return false;
+      }
+    });
   } catch {
     return false;
   }
