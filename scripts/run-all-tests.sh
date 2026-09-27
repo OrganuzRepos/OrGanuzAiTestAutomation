@@ -173,7 +173,7 @@ set +e
 # sanity, the stubbed agent specs, and the always-local web sanity. Opt-in live
 # Govmap/Ofek monitoring joins when MONITORING_ENABLED=true. The credential-gated
 # product-setup/product-authenticated role flows stay out.
-DESIRED_PROJECTS=(chromium organuz-api product agent security local-web)
+DESIRED_PROJECTS=(chromium organuz-api product agent security fraud accessibility local-web)
 if [ "${MONITORING_ENABLED:-}" = "true" ]; then
   echo "MONITORING_ENABLED=true — requesting the live Govmap/Ofek monitoring project."
   DESIRED_PROJECTS+=(monitoring)
@@ -183,7 +183,9 @@ fi
 # for this env, so a project currently commented out in playwright.config.ts is
 # skipped with a note instead of aborting the whole run ("Project(s) 'x' not found").
 # `--list` loads the same config (same QA_TARGET_ENV), so the set is accurate.
-AVAILABLE_PROJECTS="$(npx playwright test --list 2>/dev/null \
+# Override reporters: Allure otherwise records every discovered test as skipped,
+# polluting the real report with tests that were never selected for execution.
+AVAILABLE_PROJECTS="$(npx playwright test --list --reporter=list 2>/dev/null \
   | awk 'match($0, /\[[a-z0-9-]+\]/) { print substr($0, RSTART + 1, RLENGTH - 2) }' \
   | sort -u)"
 

@@ -49,13 +49,11 @@ export const AUTH = {
 };
 
 /**
- * The RPC method the app calls to verify a phone OTP, used by the brute-force / magic-OTP
- * probes. The exact `call=` name isn't carried in repo config; override with
- * `FRAUD_OTP_VERIFY_CALL` once confirmed from the live network. When the resolved method
- * isn't recognised by the backend the OTP probes self-skip (contract unconfirmed) rather
- * than assert on a wrong route — see `isUnknownRoute`.
+ * Dev's deployed login form uses call=login with sms_phone and sms_code.
+ * Production needs its own confirmed contract override. Never omit sms_code:
+ * the same method without a code requests an SMS.
  */
-export const OTP_VERIFY_CALL = process.env.FRAUD_OTP_VERIFY_CALL ?? '';
+export const OTP_VERIFY_CALL = process.env.FRAUD_OTP_VERIFY_CALL ?? (APP.env === 'prod' ? '' : 'login');
 
 /**
  * Clearly-fabricated identities. None belong to a real account, so any login/verify

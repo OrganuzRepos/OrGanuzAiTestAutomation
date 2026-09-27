@@ -8,16 +8,10 @@
  * whichever env QA_TARGET_ENV selects (dev or prod), so the same test verifies SMS login on
  * both once Twilio + a real number are wired.
  *
- * It is opt-in and skip-safe by construction — it never fails on a missing dependency:
- *  - PRODUCT_SMS_LOGIN=true is required (it triggers a real SMS send + creates a session);
- *  - Twilio creds absent (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN) → skip (cannot read SMS);
- *  - no customer phone for the env → skip;
- *  - the code not arriving in time (carrier/Twilio lag or an OTP cooldown) → skip;
- *  - a genuine dev/prod outage → skip via skipOnOutage.
- * A real product regression (the code arrives but sign-in does not take) still fails.
+ * PRODUCT_SMS_LOGIN=true opts into a real SMS send. Once enabled, missing credentials,
+ * delivery failures, and authentication failures are reported as failures. No retries.
  */
 import { test, expect } from '../support/fixtures';
-import { skipOnOutage } from '../support/envGate';
 import { rolePhone } from '../support/roleCredentials';
 import { fetchOtpFromSms, twilioConfigured, toE164 } from '../../../src/utils/twilioOtp';
 import { allureEpic, allureFeature, allureStory, allureSeverity } from '../../../src/utils/allure';
@@ -28,7 +22,7 @@ const OTP_DIGITS = 4;
 
 test.describe('Cellular login via SMS OTP (Twilio)', { tag: ['@product', '@auth'] }, () => {
   // A real SMS round-trip is slow (carrier + Twilio delivery); widen the budget.
-  test.describe.configure({ timeout: 180_000 });
+  test.describe.configure({ timeout: 180_000, retries: 0 });
 
   test.beforeEach(async () => {
     await allureEpic('Product app');
@@ -37,15 +31,15 @@ test.describe('Cellular login via SMS OTP (Twilio)', { tag: ['@product', '@auth'
 
   test('A customer signs in with the OTP delivered by SMS', async ({ product, loginDialog }) => {
     test.skip(!smsLoginEnabled, 'PRODUCT_SMS_LOGIN not set — avoids a real SMS send + login');
-    test.skip(!twilioConfigured(), 'Twilio creds absent (TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN) — cannot read the SMS');
+    expect(twilioConfigured(), 'SMS login requires TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN').toBe(true);
     await allureStory('SMS OTP login');
     await allureSeverity('critical');
 
     const phone = rolePhone('customer');
-    test.skip(!phone, 'No customer phone for this env — set CUSTOMER_PHONE');
+    expect(phone, 'SMS login requires CUSTOMER_PHONE').toBeTruthy();
 
     // Open the calculator (unlocks the dev gate; no-op on prod), turning an outage into a skip.
-    await skipOnOutage(() => product.openCalculator());
+    await product.openCalculator();
 
     await test.step('Request a code for the customer number', async () => {
       await loginDialog.open();
@@ -61,7 +55,7 @@ test.describe('Cellular login via SMS OTP (Twilio)', { tag: ['@product', '@auth'
 
     const code = await test.step('Read the OTP from the SMS via Twilio', () =>
       fetchOtpFromSms({ toNumber: otpNumber, sinceMs, digits: OTP_DIGITS }));
-    test.skip(!code, `No OTP SMS reached ${toE164(otpNumber)} in time — carrier/Twilio lag or an OTP cooldown`);
+    expect(code, `No OTP SMS reached ${toE164(otpNumber)} within the delivery timeout`).toBeTruthy();
 
     await test.step('Enter the code and sign in', async () => {
       await loginDialog.waitForOtpStep();

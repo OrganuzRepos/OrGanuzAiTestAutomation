@@ -1,6 +1,6 @@
 import { test } from './fixtures';
 import { hasSavedSession } from './auth';
-import { AppUnavailableError, OtpUnavailableError } from './errors';
+import { AppUnavailableError } from './errors';
 import type { ProductFlows } from './ProductFlows';
 import type { ProductPersonaId } from '../matrix/e2e-matrix.data';
 
@@ -36,8 +36,8 @@ export async function skipOnOutage(action: () => Promise<void>): Promise<void> {
   try {
     await action();
   } catch (err) {
-    if (err instanceof AppUnavailableError || err instanceof OtpUnavailableError) {
-      test.skip(true, `dev app unavailable (not a product bug) — ${(err as Error).message}`);
+    if (err instanceof AppUnavailableError) {
+      test.skip(true, `product app unavailable — ${(err as Error).message}`);
       return;
     }
     throw err;

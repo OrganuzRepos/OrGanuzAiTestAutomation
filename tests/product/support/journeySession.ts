@@ -1,46 +1,45 @@
-import * as fs from 'fs';
-import * as path from 'path';
-import type { Page } from '@playwright/test';
+import type { BrowserContext, Page } from '@playwright/test';
 
-/**
- * A run-scoped authenticated session for the customer end-to-end journeys.
- *
- * The dev app rate-limits OTP sends per phone, so a five-journey file that logged in five
- * times would trip the cooldown and self-skip most of its own checks. Instead the FIRST
- * journey performs the one real login and saves its storageState here; the journeys that
- * follow (running in serial) start from that saved session, so the file costs exactly one
- * OTP send per run. Same idea as the per-role `product-setup` sessions (see auth.ts), but
- * owned by this spec file rather than a setup project — which is what lets the final
- * journey sign out without invalidating a session other specs reuse.
- *
- * Deliberately a SEPARATE file from playwright/.auth/product-customer.json: the logout
- * journey destroys this session, and it must never destroy the shared role session.
- */
-const JOURNEY_SESSION_FILE = path.resolve(
-  __dirname,
-  '../../../playwright/.auth/product-customer-journey.json',
-);
+// Worker-local state cannot leak across runs, environments, or concurrent invocations.
+// This serial suite disables retries and consumes its own session on final sign-out.
+let session: Awaited<ReturnType<BrowserContext['storageState']>> | undefined;
+let tabSession: { origin: string; user: string | null } | undefined;
 
-/** True when this run has already authenticated the journey customer. */
 export function hasJourneySession(): boolean {
-  return fs.existsSync(JOURNEY_SESSION_FILE);
+  return session !== undefined;
 }
 
-/**
- * The storageState to start a journey from: the saved session once it exists, otherwise
- * `undefined` (a clean, signed-out context) so the first journey can log in for real.
- */
-export function journeyStorageState(): string | undefined {
-  return hasJourneySession() ? JOURNEY_SESSION_FILE : undefined;
+export function journeyStorageState(): typeof session {
+  return session;
 }
 
-/** Persist the signed-in context so the journeys that follow resume it. */
 export async function saveJourneySession(page: Page): Promise<void> {
-  fs.mkdirSync(path.dirname(JOURNEY_SESSION_FILE), { recursive: true });
-  await page.context().storageState({ path: JOURNEY_SESSION_FILE });
+  session = await page.context().storageState();
+  tabSession = await page.evaluate(() => {
+    const browser = globalThis as unknown as {
+      location: { origin: string };
+      sessionStorage: { getItem(key: string): string | null };
+    };
+    return { origin: browser.location.origin, user: browser.sessionStorage.getItem('user') };
+  });
 }
 
-/** Drop the saved session (after signing out, so a later run logs in cleanly). */
 export function clearJourneySession(): void {
-  fs.rmSync(JOURNEY_SESSION_FILE, { force: true });
+  session = undefined;
+  tabSession = undefined;
+}
+
+/** Playwright storageState omits sessionStorage; restore only this app's user entry. */
+export async function restoreJourneyTabSession(context: BrowserContext): Promise<void> {
+  if (!tabSession?.user) return;
+  await context.addInitScript(({ origin, user }) => {
+    const browser = globalThis as unknown as {
+      location: { origin: string };
+      sessionStorage: { getItem(key: string): string | null; setItem(key: string, value: string): void };
+    };
+    if (browser.location.origin !== origin || !user) return;
+    if (browser.sessionStorage.getItem('__qaJourneyRestored')) return;
+    browser.sessionStorage.setItem('user', user);
+    browser.sessionStorage.setItem('__qaJourneyRestored', 'true');
+  }, tabSession);
 }
