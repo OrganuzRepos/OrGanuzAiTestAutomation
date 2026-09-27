@@ -8,7 +8,10 @@
 export { AddressStep } from './AddressStep';
 export { StepTracker } from './StepTracker';
 export { PropertyConfirmStep } from './PropertyConfirmStep';
+export { RoofTypeStep } from './RoofTypeStep';
+export { MyOffersPage } from './MyOffersPage';
 export { LoginDialog } from './LoginDialog';
 export { ProductSession } from './ProductSession';
 export { WIZARD } from './wizardControls';
 export { LOGIN } from './authControls';
+export { PERSONAL_AREA } from './accountControls';

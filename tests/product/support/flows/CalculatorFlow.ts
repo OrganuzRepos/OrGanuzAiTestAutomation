@@ -1,5 +1,13 @@
+import { expect } from '@playwright/test';
 import { ProductFlows } from '../ProductFlows';
-import { StepTracker, AddressStep, PropertyConfirmStep } from '../../../../src/pages/product';
+import {
+  StepTracker,
+  AddressStep,
+  PropertyConfirmStep,
+  RoofTypeStep,
+  MyOffersPage,
+  WIZARD,
+} from '../../../../src/pages/product';
 import type { ProductRuntimeIds } from '../ProductAppPage';
 import type { PropertyCharacterizationData } from '../../matrix/e2e-matrix.data';
 
@@ -21,6 +29,8 @@ export class CalculatorFlow {
     readonly tracker: StepTracker,
     readonly address: AddressStep,
     readonly confirm: PropertyConfirmStep,
+    readonly roofType: RoofTypeStep,
+    readonly offers: MyOffersPage,
   ) {}
 
   /** Open the calculator shell (unlock the dev gate) and land on wizard step 1. */
@@ -72,6 +82,67 @@ export class CalculatorFlow {
    *  wizard stages itself). Idempotent — a resumed/persisted session returns early. */
   async loginAsCustomer(): Promise<void> {
     await this.product.loginAs('customer');
+  }
+
+  /**
+   * Open the personal area and reopen the saved project back in the wizard — the
+   * customer's "come back later and carry on" path. Returns the runtime ids of the
+   * reopened project so a spec can assert it is the SAME project it created.
+   */
+  async reopenSavedProject(): Promise<ProductRuntimeIds> {
+    await this.product.openPersonalArea();
+    await this.offers.openFirstProject();
+    return this.product.app.captureRoofRuntimeIds();
+  }
+
+  /**
+   * Drive a FRESH characterization all the way to the roof-type step. Journeys that act
+   * on that step must use this, not a resumed project.
+   *
+   * Confirmed live, three ways a "cheaper" route fails:
+   *  - deep-linking …/roof/<id>/type renders the step but with no wizard state — the CTA
+   *    falls back to the generic "בוא נמשיך" and clicking it does nothing;
+   *  - reopening a saved project puts each marking step into an EDIT mode that only the
+   *    "סיימתי, אפשר להמשיך" confirm advances;
+   *  - and arriving that way still lands on a view-only …/type: no
+   *    "סימנתי את השטח הרלוונטי" CTA and no "חזרה לשלב" tracker buttons.
+   * So the step's guard and the tracker's back-navigation exist only on the scan-fresh
+   * path. The cost is a real dev project per journey — which is why these are opt-in.
+   */
+  async characterizeToRoofTypeAsCustomer(
+    scenario: PropertyCharacterizationData,
+  ): Promise<ProductRuntimeIds> {
+    return this.characterizeAsCustomer(scenario);
+  }
+
+  /**
+   * Try to leave the roof-type step without marking a roof. The wizard must refuse:
+   * the guard dialog appears and the URL stays on …/type. Returns whether it refused.
+   */
+  async expectRoofTypeGuard(): Promise<boolean> {
+    await this.roofType.waitFor();
+    await this.roofType.attemptContinue();
+    return this.roofType.isGuarded();
+  }
+
+  /**
+   * Walk back to an already-completed stage through the progress tracker. The caller
+   * asserts the destination with expect(page).toHaveURL(...) — auto-waiting covers the
+   * navigation, so the flow stays free of lifecycle/waiting policy.
+   */
+  async goBackToStage(stage: string): Promise<void> {
+    await expect(this.tracker.backToStageButton(stage)).toBeVisible({ timeout: 20_000 });
+    await this.tracker.goBackToStage(stage);
+  }
+
+  /** The stage labels the wizard has revealed so far, in order. */
+  async revealedStages(): Promise<string[]> {
+    return this.tracker.stages();
+  }
+
+  /** The full, ordered stage roster the wizard is expected to expose. */
+  static get expectedStages(): readonly string[] {
+    return WIZARD.stages;
   }
 
   /**

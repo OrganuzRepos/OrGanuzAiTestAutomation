@@ -1,4 +1,5 @@
 import { Locator, Page } from '@playwright/test';
+import { allureStep } from '../../utils/allure';
 import { WIZARD } from './wizardControls';
 
 /**
@@ -33,5 +34,19 @@ export class StepTracker {
     if (labels.length) return labels;
     const mobile = await this.mobileIndicator.allInnerTexts().catch(() => []);
     return mobile.map((s) => s.trim()).filter(Boolean);
+  }
+
+  /**
+   * A stage the customer has already completed renders as a back-navigation button
+   * ("חזרה לשלב <stage>") instead of a plain label — the wizard's only in-app way back.
+   */
+  backToStageButton(stage: string): Locator {
+    return this.list.getByRole('button', { name: WIZARD.backToStage(stage) });
+  }
+
+  /** Navigate back to an already-completed stage via the tracker. */
+  async goBackToStage(stage: string): Promise<void> {
+    await allureStep(`Go back to stage "${stage}"`, () =>
+      this.backToStageButton(stage).click());
   }
 }
