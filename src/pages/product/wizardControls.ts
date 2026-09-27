@@ -3,6 +3,11 @@
  * Referenced by BOTH the step page objects (src/pages/product/*) and ProductAppPage so a
  * live-app relabel is fixed in one place — no selector drift between the two layers. Hebrew
  * by necessity: these strings match the live (RTL) DOM, per the organuz-hebrew-tests split.
+ *
+ * The block/parcel entries (`addressTab`/`blockParcelTab`/`block`/`parcel`/`findBlockParcel`/
+ * `blockParcelValidationMessage`) were confirmed live against PROD (energy.organuz.com) only
+ * — this suite targets dev by default and has no dev credentials to unlock the password
+ * gate for manual exploration. See the contractor-wizard-e2e spec's file header.
  */
 export const WIZARD = {
   /** Primary "continue" button, disabled until the current step is satisfied. */
@@ -14,6 +19,38 @@ export const WIZARD = {
    * desktop stage list is not rendered there): Hebrew "שלב 1 מתוך 7" / English "Step 1 of 7".
    */
   mobileStepIndicator: /שלב\s*\d+\s*מתוך\s*\d+|step\s*\d+\s*of\s*\d+/i,
+  /**
+   * Step 1's own tab switch — how a professional (contractor/company) identifies a
+   * property WITHOUT a street address. Confirmed live (prod, energy.organuz.com,
+   * 2026-09-27) via the Playwright MCP: a `tablist` with these two tabs; the address tab
+   * is the default in a fresh (no persisted localStorage) session.
+   */
+  addressTab: 'חפש לפי כתובת',
+  /** The block/parcel tab — see `addressTab`. */
+  blockParcelTab: 'חיפוש לפי גוש/חלקה',
+  /** The block ("גוש") textbox on the block/parcel tab. */
+  block: 'גוש',
+  /** The parcel ("חלקה") textbox on the block/parcel tab. */
+  parcel: 'חלקה',
+  /**
+   * The block/parcel tab's own submit button ("find"). Starts disabled.
+   *
+   * CONFIRMED DEFECT (live, prod, 2026-09-27): it enables with ONLY "גוש" (block) filled
+   * and "חלקה" (parcel) EMPTY — a block without a parcel does not identify a property.
+   * See the contractor-wizard-e2e spec's expected-RED gating check.
+   */
+  findBlockParcel: 'מצא',
+  /**
+   * Validation message expected once submitting a lone block (no parcel) is rejected. NOT
+   * YET IMPLEMENTED as of this writing.
+   *
+   * CONFIRMED DEFECT (live, prod, 2026-09-27): today the app shows no error, no toast, and
+   * no validation text at all — it silently clears "גוש" and returns "מצא" to disabled.
+   * The pattern below is what the FIXED behaviour should surface (an ARIA alert/status
+   * role, or else generic Hebrew "field required" phrasing) — it is not pinned to any
+   * copy the product has actually written, because none exists yet.
+   */
+  blockParcelValidationMessage: /חובה למלא חלקה|יש להזין חלקה|שדה חובה|נא למלא/,
   /** The "we found the requested property" confirmation banner text. */
   propertyFoundBanner: 'מצאנו את הנכס המבוקש',
   /**

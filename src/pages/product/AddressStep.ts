@@ -21,6 +21,21 @@ export class AddressStep {
   readonly firstSuggestion: Locator;
   /** The property-type button for each type key (e.g. PROPERTY_TYPE_PRIVATE_HOUSE → "בית פרטי"). */
   readonly propertyTypeButtons: Record<PropertyType, Locator>;
+  /** Step 1's tab switch ("חפש לפי כתובת" / "חיפוש לפי גוש/חלקה"). */
+  readonly addressTab: Locator;
+  /** The block/parcel identification tab — how a professional identifies a property without
+   *  a street address. */
+  readonly blockParcelTab: Locator;
+  /** The block ("גוש") textbox, only rendered on the block/parcel tab. */
+  readonly blockField: Locator;
+  /** The parcel ("חלקה") textbox, only rendered on the block/parcel tab. */
+  readonly parcelField: Locator;
+  /** The block/parcel tab's own submit button ("מצא"), disabled until both fields are set
+   *  — see WIZARD.findBlockParcel for the confirmed enablement defect. */
+  readonly findBlockParcelButton: Locator;
+  /** The validation message the FIXED behaviour should show for a lone block — not yet
+   *  rendered by the product; see WIZARD.blockParcelValidationMessage. */
+  readonly blockParcelValidation: Locator;
 
   constructor(page: Page) {
     this.continueButton = page.getByRole('button', { name: WIZARD.continue }).last();
@@ -29,6 +44,13 @@ export class AddressStep {
     this.propertyTypeButtons = Object.fromEntries(
       PROPERTY_TYPES.map((type) => [type, page.getByRole('button', { name: PROPERTY_TYPE_LABELS[type] }).first()]),
     ) as Record<PropertyType, Locator>;
+    this.addressTab = page.getByRole('tab', { name: WIZARD.addressTab });
+    this.blockParcelTab = page.getByRole('tab', { name: WIZARD.blockParcelTab });
+    this.blockField = page.getByRole('textbox', { name: WIZARD.block });
+    this.parcelField = page.getByRole('textbox', { name: WIZARD.parcel });
+    this.findBlockParcelButton = page.getByRole('button', { name: WIZARD.findBlockParcel });
+    this.blockParcelValidation = page.getByRole('alert')
+      .or(page.getByText(WIZARD.blockParcelValidationMessage));
   }
 
   async selectPropertyType(type: PropertyType): Promise<void> {
@@ -55,5 +77,33 @@ export class AddressStep {
   async continue(): Promise<void> {
     await expect(this.continueButton).toBeEnabled({ timeout: 20_000 });
     await allureStep('Continue from address step', () => this.continueButton.click());
+  }
+
+  /** Switch to the block/parcel ("גוש/חלקה") tab — swaps out the address combobox. */
+  async switchToBlockParcelTab(): Promise<void> {
+    await allureStep('Switch to the block/parcel tab', () => this.blockParcelTab.click());
+    await this.blockField.waitFor({ state: 'visible', timeout: 15_000 });
+  }
+
+  /** Switch back to the address ("כתובת") tab — swaps out the block/parcel fields. */
+  async switchToAddressTab(): Promise<void> {
+    await allureStep('Switch to the address tab', () => this.addressTab.click());
+    await this.addressBox.waitFor({ state: 'visible', timeout: 15_000 });
+  }
+
+  /** Fill the block ("גוש") field. Assumes the block/parcel tab is already active. */
+  async fillBlock(value: string): Promise<void> {
+    await allureStep(`Fill block "${value}"`, () => this.blockField.fill(value));
+  }
+
+  /** Fill the parcel ("חלקה") field. Assumes the block/parcel tab is already active. */
+  async fillParcel(value: string): Promise<void> {
+    await allureStep(`Fill parcel "${value}"`, () => this.parcelField.fill(value));
+  }
+
+  /** Click "מצא" — the block/parcel tab's own submit. Caller decides whether it expects the
+   *  button enabled; this does not wait for/assert enablement itself. */
+  async submitBlockParcel(): Promise<void> {
+    await allureStep('Submit block/parcel', () => this.findBlockParcelButton.click());
   }
 }
