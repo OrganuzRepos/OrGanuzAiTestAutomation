@@ -29,8 +29,9 @@ removed, keep these plans in sync with the specs and with the counts in
 | `local-web` | 50 |
 | `organuz-api` | 1 |
 | `product` | 89 |
+| `qa-api` | 12 |
 | `security` | 30 |
-| **Total** | **216** |
+| **Total** | **228** |
 
 Counts come from `npx playwright test --list`. Projects commented out in
 `playwright.config.ts` discover nothing and are absent from this table.
