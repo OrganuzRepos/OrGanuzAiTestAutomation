@@ -78,6 +78,16 @@ jobs:
       - name: Run TypeScript typecheck
         run: npm run typecheck
 
+      # The test counts in CLAUDE.md / Readme.md / docs/test-plans/README.md are a
+      # generated block, not prose. Verifying them here turns "someone forgot to update
+      # the docs" from something a reader discovers into something the pipeline says.
+      # Needs browsers because it asks Playwright what it discovers.
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Check the generated test counts are in sync
+        run: npm run docs:counts:check
+
   tests:
     name: Playwright ${{ matrix.project }}
     runs-on: ubuntu-latest
