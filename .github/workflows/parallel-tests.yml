@@ -525,9 +525,16 @@ jobs:
       - name: Notify Slack with report links
         if: always() && github.event_name != 'pull_request'
         env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          SLACK_WEBHOOK_BOT_URL: ${{ secrets.SLACK_WEBHOOK_BOT_URL }}
           SLACK_ORGANUZ_TESTING_URL: ${{ secrets.SLACK_ORGANUZ_TESTING_URL }}
-          GRAFANA_LINK_URL: ${{ vars.GRAFANA_URL || 'http://localhost:3001' }}
-          SWAGGER_LINK_URL: ${{ vars.SWAGGER_URL || 'http://localhost:8080' }}
+          # No localhost fallback: these ports live only inside the runner, so a
+          # localhost link is dead for everyone reading it in Slack. Unset => the
+          # bullet is omitted, matching the rule this job's own env block states for
+          # the step summary. Set the GRAFANA_URL / SWAGGER_URL repository variables
+          # to a hosted deployment to have them appear.
+          GRAFANA_LINK_URL: ${{ vars.GRAFANA_URL }}
+          SWAGGER_LINK_URL: ${{ vars.SWAGGER_URL }}
         run: |
           if [ -z "$SLACK_WEBHOOK_URL" ] && [ -z "$SLACK_WEBHOOK_BOT_URL" ] && [ -z "$SLACK_ORGANUZ_TESTING_URL" ]; then
             echo "No Slack webhook secrets set — skipping report notification."
@@ -544,7 +551,18 @@ jobs:
 
           # Playwright HTML report lives in the run's artifacts (uploaded alongside Allure).
           PLAYWRIGHT_LINK="<${RUN_URL}|Playwright HTML report (download artifact)>"
-          TEXT=":bar_chart: *Organuz — GitHub Actions test run* finished — <${RUN_URL}|View run>\n• ${ALLURE_LINK}\n• <${GRAFANA_LINK_URL}|Grafana dashboard>\n• ${PLAYWRIGHT_LINK}\n• <${SWAGGER_LINK_URL}|Scalar API docs>"
+
+          # Only link the ephemeral stack when a hosted URL is configured — otherwise
+          # the bullet is dropped rather than posted as an unreachable localhost link.
+          BULLETS="• ${ALLURE_LINK}\n• ${PLAYWRIGHT_LINK}"
+          if [ -n "$GRAFANA_LINK_URL" ]; then
+            BULLETS="${BULLETS}\n• <${GRAFANA_LINK_URL}|Grafana dashboard>"
+          fi
+          if [ -n "$SWAGGER_LINK_URL" ]; then
+            BULLETS="${BULLETS}\n• <${SWAGGER_LINK_URL}|Scalar API docs>"
+          fi
+
+          TEXT=":bar_chart: *Organuz — GitHub Actions test run* finished — <${RUN_URL}|View run>\n${BULLETS}"
           PAYLOAD=$(printf '{"text":"%s"}' "$TEXT")
 
           post() { # $1 = secret name, $2 = url
@@ -555,4 +573,6 @@ jobs:
               echo "$1: post failed (non-fatal)."
             fi
           }
+          post SLACK_WEBHOOK_URL "$SLACK_WEBHOOK_URL"
+          post SLACK_WEBHOOK_BOT_URL "$SLACK_WEBHOOK_BOT_URL"
           post SLACK_ORGANUZ_TESTING_URL "$SLACK_ORGANUZ_TESTING_URL"
