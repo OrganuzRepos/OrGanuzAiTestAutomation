@@ -6,13 +6,22 @@ from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel, Field
 
 
-# Origins allowed to call the API from a browser (the Scalar/Swagger UI). Locally
-# this is the swagger container on :8080; on a hosted deploy (e.g. Railway) set
-# CORS_ALLOW_ORIGINS to the public swagger URL(s), comma-separated.
+# Origins allowed to call the API from a browser (the Scalar/Swagger UI). On a hosted
+# deploy (e.g. Railway) set CORS_ALLOW_ORIGINS to the public swagger URL(s),
+# comma-separated.
+#
+# Locally the Scalar UI's HOST port is overridable (SCALAR_PORT in docker-compose, so the
+# stack can coexist with other compose projects that want :8080). The default below
+# tracks it: hardcoding 8080 meant that moving the port left the docs page unable to
+# fetch /openapi.json, showing "Document could not be loaded" with a CORS error in the
+# console and no hint that the port was the cause.
 def _cors_origins() -> list[str]:
     raw = os.getenv("CORS_ALLOW_ORIGINS", "")
     origins = [o.strip() for o in raw.split(",") if o.strip()]
-    return origins or ["http://localhost:8080", "http://127.0.0.1:8080"]
+    if origins:
+        return origins
+    port = os.getenv("SCALAR_PORT", "8080").strip() or "8080"
+    return [f"http://localhost:{port}", f"http://127.0.0.1:{port}"]
 
 
 class ServiceStatus(BaseModel):
