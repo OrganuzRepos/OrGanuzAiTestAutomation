@@ -54,32 +54,65 @@ class AutomationOverview(BaseModel):
     reports: list[str]
 
 
+# The projects playwright.config.ts actually registers. Kept in step with the config by
+# the qa-api contract suite (tests/qa-api/automation-contract.spec.ts), which compares
+# this list against `npx playwright test --list` and fails when they diverge — this list
+# had drifted badly, advertising three projects that no longer existed ("api",
+# "offline-demo", "current-tests") while omitting five that did.
+#
+# Disabled projects (chromium, product-setup, product-authenticated) are commented out in
+# playwright.config.ts, discover nothing, and are deliberately absent here.
 PLAYWRIGHT_PROJECTS = [
     PlaywrightProject(
-        name="chromium",
-        test_match="tests/ui/**/*.spec.ts",
-        command="npx playwright test --project=chromium",
-        purpose="Runs UI tests against the OrGanuz marketing site.",
-    ),
-    PlaywrightProject(
-        name="product",
-        test_match="tests/product/**/*.spec.ts",
-        command="npx playwright test --project=product",
-        purpose="Runs the product E2E matrix for personas, calculator, quotations, and access control.",
-    ),
-    PlaywrightProject(
-        name="api",
-        test_match="tests/api/**/*.spec.ts",
-        command="npx playwright test --project=api",
-        purpose="Runs API tests against JSONPlaceholder or the local mock.",
+        name="accessibility",
+        test_match="tests/accessibility/**/*.spec.ts",
+        command="npx playwright test --project=accessibility",
+        purpose="Axe/WCAG and semantic regression checks against the public marketing homepage.",
     ),
     PlaywrightProject(
         name="agent",
         test_match="tests/agent/**/*.spec.ts",
         command="npx playwright test --project=agent",
-        purpose="Runs QA agent orchestrator regression tests.",
+        purpose="QA agent orchestrator and TestPlanAgent regression tests (offline stubs).",
+    ),
+    PlaywrightProject(
+        name="fraud",
+        test_match="tests/fraud/**/*.spec.ts",
+        command="npx playwright test --project=fraud",
+        purpose="Authorized, non-destructive fraud / account-takeover checks against the product app.",
+    ),
+    PlaywrightProject(
+        name="local-web",
+        test_match="tests/local-web/**/*.spec.ts",
+        command="npx playwright test --project=local-web",
+        purpose="Local-only marketing-site e2e; every spec self-skips when CI is set.",
+    ),
+    PlaywrightProject(
+        name="organuz-api",
+        test_match="tests/organuz-api/**/*.spec.ts",
+        command="npx playwright test --project=organuz-api",
+        purpose="Contract tests against the Organuz Supabase backend with the public anon key.",
+    ),
+    PlaywrightProject(
+        name="product",
+        test_match="tests/product/**/*.spec.ts",
+        command="npx playwright test --project=product",
+        purpose="Product calculator coverage for the env selected by QA_TARGET_ENV.",
+    ),
+    PlaywrightProject(
+        name="qa-api",
+        test_match="tests/qa-api/**/*.spec.ts",
+        command="npx playwright test --project=qa-api",
+        purpose="Integration and contract tests for this service; self-skips when the stack is down.",
+    ),
+    PlaywrightProject(
+        name="security",
+        test_match="tests/security/**/*.spec.ts",
+        command="npx playwright test --project=security",
+        purpose="Authorized, non-destructive penetration testing of the Organuz Supabase backend.",
     ),
 ]
+
 
 AGENT_COMMANDS = [
     AgentCommand(

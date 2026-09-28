@@ -6,7 +6,7 @@
 
 🎭 **Playwright**  ·  🟦 **TypeScript**  ·  🟢 **Node.js 22**  ·  🐳 **Docker**  ·  📈 **Grafana**  ·  🔥 **Prometheus**
 
-✅ **216 default tests discovered**  ·  🛡️ **44 security + fraud checks**  ·  ♿ **30 WCAG / Axe checks**
+✅ **228 default tests discovered**  ·  🛡️ **44 security + fraud checks**  ·  ♿ **30 WCAG / Axe checks**
 
 | [🚀&nbsp;Setup](#local-setup) | [▶️&nbsp;Test&nbsp;Suite](#what-npm-test-runs) | [🛡️&nbsp;Security](#run-the-backend-security-pentest-tests) | [🤖&nbsp;QA&nbsp;Agent](#qa-agent) | [📊&nbsp;Dashboard](#grafana-qa-dashboard) | [⚙️&nbsp;CI](#github-actions) | [🔧&nbsp;Config](#configuration) |
 | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -29,7 +29,7 @@ The tests are written with [Playwright](https://playwright.dev/) (a browser-auto
 
 Each part of the system and what it does:
 
-- **Playwright** — runs the actual tests. The active default suite discovers **216 tests** (the per-project table below is generated — see `npm run docs:counts`): product calculator checks (`product`), the Organuz backend API contract (`organuz-api`), backend penetration tests (`security`), product fraud/ATO checks (`fraud`), local-only marketing e2e (`local-web`), QA-agent regressions (`agent`), and CI-enabled marketing accessibility checks (`accessibility`). The broader marketing UI checks (`chromium`) and live per-role product flows remain disabled. External-API monitoring is opt-in.
+- **Playwright** — runs the actual tests. The active default suite discovers **228 tests** (the per-project table below is generated — see `npm run docs:counts`): product calculator checks (`product`), the Organuz backend API contract (`organuz-api`), backend penetration tests (`security`), product fraud/ATO checks (`fraud`), local-only marketing e2e (`local-web`), QA-agent regressions (`agent`), CI-enabled marketing accessibility checks (`accessibility`), and the local QA dashboard API integration + contract checks (`qa-api`). The broader marketing UI checks (`chromium`) and live per-role product flows remain disabled. External-API monitoring is opt-in.
 - **TypeScript** — the language the tests and framework code are written in.
 - **FastAPI** — a small local web service that exposes health checks and metadata endpoints.
 - **Scalar** — a nice API-reference page for the external OpenAPI docs.
@@ -138,8 +138,9 @@ The default suite discovers:
 | `local-web` | 50 |
 | `organuz-api` | 1 |
 | `product` | 89 |
+| `qa-api` | 12 |
 | `security` | 30 |
-| **Total** | **216** |
+| **Total** | **228** |
 
 Counts come from `npx playwright test --list`. Projects commented out in
 `playwright.config.ts` discover nothing and are absent from this table.
@@ -579,7 +580,7 @@ The Playwright projects `product`, `organuz-api`, `agent`, `security`, `fraud`, 
 
 Re-enable a disabled project by uncommenting its block in `playwright.config.ts`.
 
-The default suite discovers **216 tests** (`product` 89 + `organuz-api` 1 + `agent` 2 + `security` 30 + `fraud` 14 + `local-web` 50 + `accessibility` 30), or **266** with `MONITORING_ENABLED=true`. The 50 `local-web` tests run only off CI, so the main CI matrix discovers 166 tests plus the separate non-blocking 50-test monitoring job. Environment- and opt-in-gated cases may report as skipped.
+The default suite discovers **228 tests** (`product` 89 + `organuz-api` 1 + `agent` 2 + `security` 30 + `fraud` 14 + `qa-api` 12 + `local-web` 50 + `accessibility` 30), or **278** with `MONITORING_ENABLED=true`. The 50 `local-web` tests run only off CI and the 12 `qa-api` tests run in the services-smoke job, so the main CI matrix discovers 166 tests plus the separate non-blocking 50-test monitoring job. Environment- and opt-in-gated cases may report as skipped.
 
 ### ***Environment files***
 

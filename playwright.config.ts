@@ -159,6 +159,15 @@ export default defineConfig({
       },
     },
     {
+      // The LOCAL QA dashboard API (FastAPI in docker compose) — integration + contract.
+      // Browserless. The stack is not running by default, so these self-skip via a
+      // reachability canary (tests/qa-api/support/qaApi.ts) rather than failing every
+      // machine that has not started the containers; on CI they run in the
+      // services-smoke job, which brings the stack up. Same canary policy as monitoring.
+      name: 'qa-api',
+      testMatch: 'tests/qa-api/**/*.spec.ts',
+    },
+    {
       name: 'organuz-api',
       testMatch: 'tests/organuz-api/**/*.spec.ts',
       grep: /@other-smoke/,

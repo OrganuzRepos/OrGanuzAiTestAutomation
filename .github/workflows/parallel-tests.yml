@@ -224,6 +224,24 @@ jobs:
           docker compose logs api swagger prometheus grafana pushgateway
           exit 1
 
+      # The stack is only up inside this job, so this is where the qa-api suite can
+      # actually run. It is deliberately NOT in the `tests` matrix: there the containers
+      # are absent and all 12 would skip on the reachability canary.
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run the QA API integration + contract tests
+        run: npx playwright test --project=qa-api
+        env:
+          FASTAPI_URL: http://localhost:8000
+          SCALAR_PORT: '8080'
+
       - name: Add service links to summary
         if: always()
         run: |
