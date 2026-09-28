@@ -24,7 +24,9 @@
     "agent:demo": "npm run agent:build && node dist/src/agent/demo/run-demo.js",
     "agent:plan": "npm run agent:build && node dist/src/agent/demo/generate-test-plan.js",
     "test-plans:pdf": "npm run agent:build && node dist/src/tools/build-test-plan-pdfs.js",
-    "agent:current-tests": "npm run agent:build && node dist/src/agent/run-current-tests.js"
+    "agent:current-tests": "npm run agent:build && node dist/src/agent/run-current-tests.js",
+    "docs:counts": "node scripts/sync-test-counts.mjs",
+    "docs:counts:check": "node scripts/sync-test-counts.mjs --check"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",
