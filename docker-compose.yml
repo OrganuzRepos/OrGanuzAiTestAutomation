@@ -11,6 +11,11 @@ services:
     image: organuz-ai-fastapi-server
     ports:
       - "${API_PORT:-8000}:8000"
+    environment:
+      # Keep the browser-facing CORS allow-list in step with the Scalar host port
+      # published below. These two drifting apart is what makes the API-reference page
+      # fail with "Document could not be loaded" after overriding SCALAR_PORT.
+      CORS_ALLOW_ORIGINS: "http://localhost:${SCALAR_PORT:-8080},http://127.0.0.1:${SCALAR_PORT:-8080}"
     # No test-results bind mount: QA metrics are now pushed to the Pushgateway by
     # the test runner (scripts/push-qa-metrics.mjs), so the api no longer reads the
     # results file (which is what went stale here on macOS after each run).
